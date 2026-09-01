@@ -10,3 +10,4 @@ module.exports = function auditWrite(req, res, next) {
   console.log(`[AUDIT] ${shortId}Write request received for ${req.method} ${req.originalUrl || req.path}`);
   next();
 };
+
