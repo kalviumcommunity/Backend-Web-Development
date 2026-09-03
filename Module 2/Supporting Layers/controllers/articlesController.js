@@ -9,28 +9,16 @@
 const service = require('./../services/articlesService');
 
 exports.list = async (req, res, next) => {
-  try {
-    const articles = await service.getAll();
-    res.json({ data: articles });
-  } catch (err) {
-    next(err);
-  }
+  const articles = await service.getAll();
+  res.json({ data: articles });
 };
 
 exports.create = async (req, res, next) => {
-  try {
-    const article = await service.create(req.body);
-    res.status(201).json({ data: article });
-  } catch (err) {
-    next(err);
-  }
+  const article = await service.create(req.body);
+  res.status(201).json({ data: article });
 };
 
 exports.update = async (req, res, next) => {
-  try {
-    const article = await service.update(Number(req.params.id), req.body);
-    res.json({ data: article });
-  } catch (err) {
-    next(err);
-  }
+  const article = await service.update(Number(req.params.id), req.body);
+  res.json({ data: article });
 };
