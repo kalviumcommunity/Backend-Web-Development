@@ -1,23 +1,48 @@
+
 const express = require('express');
+
 const postRoutes = require('./routes/postRoutes');
 const { resetData } = require('./data/postStore');
-const controller = require('./controllers/postController');
 
 function createApp() {
   const app = express();
+
   app.use(express.json());
 
+  // Resource-oriented post routes
   app.use('/', postRoutes);
-  app.get('/explode', controller.explode);
 
-  // TODO:
-  // - make public contract resource-oriented
-  // - standardise success envelope
-  // - standardise error envelope
-  // - add pagination metadata on list route
-  // - cap limit server-side (default limit = 2 for exercise)
-  // - stop exposing old verb routes as public contract
-  // - expose safe internal failure route for testing/demo
+  // Handle unknown routes consistently
+  app.use((req, res) => {
+    return res.status(404).json({
+      ok: false,
+      error: {
+        code: 'ROUTE_NOT_FOUND',
+        message: 'Route not found',
+      },
+    });
+  });
+
+  // Centralized error handler
+  app.use((err, req, res, next) => {
+    const status = err.statusCode || 500;
+
+    if (status >= 500) {
+      console.error('Internal server error:', err);
+    }
+
+    return res.status(status).json({
+      ok: false,
+      error: {
+        code: status === 404
+          ? err.code || 'NOT_FOUND'
+          : 'INTERNAL_ERROR',
+        message: status === 404
+          ? err.message || 'Resource not found'
+          : 'An unexpected error occurred',
+      },
+    });
+  });
 
   return app;
 }
@@ -25,12 +50,13 @@ function createApp() {
 if (require.main === module) {
   const app = createApp();
   const port = 3000;
+
   app.listen(port, () => {
-    console.log(`Starter API listening on port ${port}`);
+    console.log(`API listening on port ${port}`);
   });
 }
 
 module.exports = {
   createApp,
-  resetData
+  resetData,
 };

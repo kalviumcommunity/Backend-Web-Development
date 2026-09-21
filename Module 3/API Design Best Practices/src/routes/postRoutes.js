@@ -1,11 +1,23 @@
+
 const express = require('express');
+
 const controller = require('../controllers/postController');
 
 const router = express.Router();
 
-router.get('/getPosts', controller.listPosts);
-router.get('/getPost/:id', controller.getPost);
-router.post('/createPost', controller.createPost);
-router.post('/likePost/:id', controller.likePost);
+// List all posts
+router.get('/posts', controller.listPosts);
+
+// Fetch one post
+router.get('/posts/:id', controller.getPost);
+
+// Create one post
+router.post('/posts', controller.createPost);
+
+// Like one post
+router.post('/posts/:id/likes', controller.likePost);
+
+// Safe internal-error demo route
+router.get('/demo/error', controller.demoError);
 
 module.exports = router;
