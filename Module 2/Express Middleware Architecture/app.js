@@ -13,42 +13,38 @@
  * provided `auditWrite` middleware on a single route only (see routes/posts.js).
  *
  * Run it with:  npm start
- * Then hit the API, e.g.:
- *   curl http://localhost:3000/posts
- *   curl -X POST http://localhost:3000/posts -H "Content-Type: application/json" -d '{"title":"Hi"}'
- *   curl http://localhost:3000/users
  */
 
 const express = require('express');
 
-// The two routers are already written and mounted for you.
+// Import the routers
 const postsRouter = require('./routes/posts');
 const usersRouter = require('./routes/users');
 
-// Your middleware live in ./middleware — implement them, then mount them below.
-// const requestId = require('./middleware/requestId');
-// const logger = require('./middleware/logger');
-// const timing = require('./middleware/timing');
+// Import the custom middleware
+const requestId = require('./middleware/requestId');
+const logger = require('./middleware/logger');
+const timing = require('./middleware/timing');
 
 const app = express();
 
-// Built-in body parser so POST /posts can read req.body (already provided).
+// Built-in middleware to parse JSON request bodies
 app.use(express.json());
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TODO: mount your GLOBAL middleware here, BEFORE the routers, in a deliberate
-//       order. request-id must run first so the logger and timer can read req.id.
-//
-//   app.use(requestId);
-//   app.use(logger);
-//   app.use(timing);
-// ─────────────────────────────────────────────────────────────────────────────
+// Global Middleware
+// Order is important!
+// requestId should run first so logger and timing can access req.id
+app.use(requestId);
+app.use(logger);
+app.use(timing);
 
-// Two mounted routers (do not remove these).
+// Mount the routers
 app.use('/posts', postsRouter);
 app.use('/users', usersRouter);
 
+// Start the server
 const PORT = 3000;
+
 app.listen(PORT, () => {
   console.log(`API listening on http://localhost:${PORT}`);
 });
