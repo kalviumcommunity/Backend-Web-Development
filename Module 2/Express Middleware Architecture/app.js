@@ -1,50 +1,38 @@
 /**
  * Express Middleware Architecture — Build the Pipeline
  *
- * This Express app already has TWO routers mounted (/posts and /users) and NO
- * custom middleware written yet. Your job is to write three middleware and mount
- * them correctly:
+ * Implements three global middleware:
+ *   1) requestId — attaches a UUID to req (and the X-Request-Id header)
+ *   2) logger    — logs method, path, and status
+ *   3) timing    — logs how many milliseconds the request took
  *
- *   1) requestId — attaches a UUID to req (and the X-Request-Id header)   [GLOBAL]
- *   2) logger    — logs method, path, and status                          [GLOBAL]
- *   3) timing    — logs how many milliseconds the request took            [GLOBAL]
- *
- * Then show ONE example of PER-ROUTE mounting vs GLOBAL mounting by mounting the
- * provided `auditWrite` middleware on a single route only (see routes/posts.js).
- *
- * Run it with:  npm start
- * Then hit the API, e.g.:
- *   curl http://localhost:3000/posts
- *   curl -X POST http://localhost:3000/posts -H "Content-Type: application/json" -d '{"title":"Hi"}'
- *   curl http://localhost:3000/users
+ * Also demonstrates per-route mounting by using auditWrite on POST /posts only.
  */
 
 const express = require('express');
 
-// The two routers are already written and mounted for you.
+// Routers
 const postsRouter = require('./routes/posts');
 const usersRouter = require('./routes/users');
 
-// Your middleware live in ./middleware — implement them, then mount them below.
-// const requestId = require('./middleware/requestId');
-// const logger = require('./middleware/logger');
-// const timing = require('./middleware/timing');
+// Custom middleware
+const requestId = require('./middleware/requestId');
+const logger = require('./middleware/logger');
+const timing = require('./middleware/timing');
 
 const app = express();
 
-// Built-in body parser so POST /posts can read req.body (already provided).
+// Built-in body parser so POST /posts can read req.body
 app.use(express.json());
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TODO: mount your GLOBAL middleware here, BEFORE the routers, in a deliberate
-//       order. request-id must run first so the logger and timer can read req.id.
-//
-//   app.use(requestId);
-//   app.use(logger);
-//   app.use(timing);
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// GLOBAL middleware pipeline — order matters
+app.use(requestId);   // 1. stamp req.id + header
+app.use(logger);      // 2. log method/path/status
+app.use(timing);      // 3. log duration
+// ─────────────────────────────────────────────────────────────
 
-// Two mounted routers (do not remove these).
+// Routers
 app.use('/posts', postsRouter);
 app.use('/users', usersRouter);
 
