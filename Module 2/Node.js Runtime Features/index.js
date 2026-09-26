@@ -23,6 +23,14 @@ const OUTPUT = path.join(__dirname, 'sample-copy.txt');
 
 // ── PART 1: read the whole file into memory, then log its size ──────────────
 function readWholeFile() {
+  fs.readFile(INPUT, (err, data) =>{
+    if(err){
+      console.error(err.message);
+      return;
+    }
+    // TODO: log the size in bytes. A Buffer has a .length property (bytes).
+    console.log(`readFile: loaded ${data.length} bytes into memory`); 
+  })
   // TODO: use fs.readFile(INPUT, callback). With no encoding, the callback
   //       receives a Buffer.
   // TODO: if there is an error, log it and return.
@@ -32,6 +40,13 @@ function readWholeFile() {
 
 // ── PART 2: stream the file and pipe it to a writable stream ────────────────
 function streamFile() {
+  const readable = fs.createReadStream(INPUT);
+  const writable = fs.createWriteStream(OUTPUT);
+  readable.pipe(writable);
+  writable.on('finish', () => {
+    console.log('stream:finished copying via 64KB chunks (flat memory)')
+  }
+  )
   // TODO: create a readable stream with fs.createReadStream(INPUT).
   // TODO: create a writable stream with fs.createWriteStream(OUTPUT).
   // TODO: pipe the readable into the writable: readable.pipe(writable).
@@ -46,6 +61,7 @@ function streamFile() {
 //       so peak memory stays flat regardless of file size.
 //
 // YOUR EXPLANATION:
+// Reading the whole file with readFile holds the entire file in memory at once, // so memory usage increases as the file size increases. A stream moves the file // in small chunks, so it does not need to hold the whole file in memory and // keeps peak memory usage flat even for large files.
 //
 
 // Run both approaches.
