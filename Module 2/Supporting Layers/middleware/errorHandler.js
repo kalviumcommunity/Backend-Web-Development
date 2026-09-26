@@ -7,29 +7,23 @@
  *   - process.env.NODE_ENV is read directly here. It should come from config.nodeEnv.
  */
 
-// DUPLICATED definition — should move to utils/AppError.js
-class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isOperational = true;
-  }
-}
+// TODO: Remove the duplicated AppError definition.
+// TODO: Import the shared AppError from utils/AppError.js.
+const AppError = require('../utils/AppError');
 
-// INLINE process.env read — should move to config/index.js (config.nodeEnv)
-const NODE_ENV = process.env.NODE_ENV || 'development';
+// TODO: Remove the direct process.env.NODE_ENV read.
+// TODO: Import config from config/index.js.
+const config = require('../config');
 
 module.exports = function errorHandler(err, req, res, next) {
   const status = err.statusCode || 500;
   const body = { error: err.message || 'Internal Server Error' };
 
   // Only leak stack traces outside production.
-  if (NODE_ENV !== 'production' && err.stack) {
+  // TODO: Use config.nodeEnv instead of NODE_ENV.
+  if (config.nodeEnv !== 'production' && err.stack) {
     body.stack = err.stack;
   }
 
   res.status(status).json(body);
 };
-
-// Exported so other files currently import AppError from here too (messy).
-module.exports.AppError = AppError;
