@@ -28,6 +28,13 @@ function readWholeFile() {
   // TODO: if there is an error, log it and return.
   // TODO: log the size in bytes. A Buffer has a .length property (bytes).
   //       Example log: "readFile: loaded 524288 bytes into memory".
+  fs.readFile(INPUT,(err,data)=>{
+    if(err){
+      console.error(err.message);
+      return;
+    }
+    console.log(`readfile: loaded ${data.length} bytes into memory.`)
+  })
 }
 
 // ── PART 2: stream the file and pipe it to a writable stream ────────────────
@@ -37,6 +44,11 @@ function streamFile() {
   // TODO: pipe the readable into the writable: readable.pipe(writable).
   // TODO: listen for the writable's "finish" event and log a done message,
   //       e.g. "stream: finished copying via 64KB chunks (flat memory)".
+   const readable=fs.createReadStream(INPUT);
+   const writable=fs.createWriteStream(OUTPUT);
+   readable.pipe(writable);
+   writable.on("finish", () => {
+   console.log("stream: finished copying via 64KB chunks(flat memory)")});
 }
 
 // ── PART 3: explain the difference ──────────────────────────────────────────
@@ -47,6 +59,9 @@ function streamFile() {
 //
 // YOUR EXPLANATION:
 //
+// fs.readFile loads the whole file into memory at once, so large files
+// can use a lot of memory. A stream moves the file in small chunks,
+// so the peak memory usage stays flat even when the file is very large.
 
 // Run both approaches.
 readWholeFile();
