@@ -6,7 +6,7 @@ const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // a post may only be edited within 
 exports.getAll = async () => repo.findAll();
 exports.create = async ({ authorId, title, body }) => repo.insert({ authorId, title, body });
 
-/**
+/** what are the Support?
  * TODO (Domain rule): edit a post.
  * Implement these guards IN ORDER, each throwing an AppError, before any write:
  *   1. The post must exist          -> AppError('Post not found', 404)
