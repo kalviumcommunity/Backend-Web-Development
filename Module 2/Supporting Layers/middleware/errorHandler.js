@@ -1,23 +1,14 @@
 /**
- * Central error handler — STARTER.
+ * Central error handler
  *
- * PROBLEMS:
- *   - AppError is DEFINED again here (also defined in services/articlesService.js).
- *     After you create utils/AppError.js, delete both copies and import the shared one.
- *   - process.env.NODE_ENV is read directly here. It should come from config.nodeEnv.
+ * AppError lives in utils/
+ * Configuration lives in config/
  */
 
-// DUPLICATED definition — should move to utils/AppError.js
-class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isOperational = true;
-  }
-}
+const AppError = require('../utils/AppError');
+const config = require('../config');
 
-// INLINE process.env read — should move to config/index.js (config.nodeEnv)
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const NODE_ENV = config.nodeEnv;
 
 module.exports = function errorHandler(err, req, res, next) {
   const status = err.statusCode || 500;
@@ -30,6 +21,3 @@ module.exports = function errorHandler(err, req, res, next) {
 
   res.status(status).json(body);
 };
-
-// Exported so other files currently import AppError from here too (messy).
-module.exports.AppError = AppError;

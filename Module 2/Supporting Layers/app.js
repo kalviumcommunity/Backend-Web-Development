@@ -28,8 +28,8 @@ app.use('/articles', articlesRouter);
 app.use(errorHandler);
 
 // TODO: this process.env read should move into config/index.js, then import it.
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const config = require('./config');
+app.listen(config.port, () => {
   console.log(`articles-api listening on http://localhost:${PORT}`);
 });
 
