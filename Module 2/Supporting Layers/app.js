@@ -1,24 +1,18 @@
 /**
- * articles-api — STARTER (scattered state)
+ * articles-api — entry point.
  *
- * This app works, but it violates every rule from the "Supporting Layers" lesson:
- *   - validation chains are written INLINE in routes/articles.js
- *   - process.env is read directly HERE and in services/articlesService.js and
- *     middleware/errorHandler.js (no single config module)
- *   - AppError is DUPLICATED in services and middleware (no utils/ home)
- *
- * Your job (see question.md):
- *   1. Move validation chains into  validators/article.validator.js
- *   2. Create  utils/AppError.js, utils/asyncHandler.js, utils/validateRequest.js
- *   3. Create  config/index.js  as the ONLY file that reads process.env
- *   4. Add a committed  .env.example  and keep  .env  in .gitignore
+ * Runtime configuration is read exclusively from config/index.js.
+ * No process.env references belong here.
  *
  * Run it with:  npm start
  */
 
-const express = require('express');
+'use strict';
+
+const express        = require('express');
+const config         = require('./config');          // ← only place config is imported
 const articlesRouter = require('./routes/articles');
-const errorHandler = require('./middleware/errorHandler');
+const errorHandler   = require('./middleware/errorHandler');
 
 const app = express();
 app.use(express.json());
@@ -27,10 +21,8 @@ app.use('/articles', articlesRouter);
 
 app.use(errorHandler);
 
-// TODO: this process.env read should move into config/index.js, then import it.
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`articles-api listening on http://localhost:${PORT}`);
+app.listen(config.port, () => {
+  console.log(`articles-api listening on http://localhost:${config.port}`);
 });
 
 module.exports = app;
