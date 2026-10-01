@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Real environment secrets — NEVER commit this file
+.env
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
