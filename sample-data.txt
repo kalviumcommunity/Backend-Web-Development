@@ -1,0 +1,2 @@
+This sample file is copied once with fs.readFile and once with a readable stream.
+Streams move data in chunks so large files do not need to fit entirely in memory.
