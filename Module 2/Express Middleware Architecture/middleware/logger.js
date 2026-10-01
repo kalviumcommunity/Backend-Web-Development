@@ -13,6 +13,15 @@
  * Example line:  [a3f9c1e2] POST /posts 201
  */
 
+// Define the logger middleware
 module.exports = function logger(req, res, next) {
   // TODO: register res.on('finish', ...) to log method, path, status, then next().
+  res.on('finish', () => { // Run this function when the response has finished
+
+    const id = req.id ? `[${req.id.slice(0, 8)}] ` : ''; // "If req.id exists, take its first 8 characters and put them inside [ ]; otherwise use an empty string."
+
+    console.log(`${id}${req.method} ${req.path} ${res.statusCode}`); // Log ID, method, path and status
+  });
+
+  next(); // Continue immediately without waiting for the response to finish
 };
