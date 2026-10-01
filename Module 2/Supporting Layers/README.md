@@ -15,19 +15,14 @@ Refactor a working but messy `articles-api` into three supporting layers: `valid
 
 ## Tasks
 
-The app currently has validation inline in routes and `process.env` read in several files. Reorganise it:
+The app currently has validation inline in routes and environment variables read in several files. Reorganise it:
 
 1. `validators/article.validator.js` — move the inline `createArticle` / `updateArticle` chains here; import them in `routes/articles.js`.
 2. `utils/AppError.js`, `utils/asyncHandler.js`, `utils/validateRequest.js` — create these pure helpers (no imports from app layers).
-3. `config/index.js` — the **only** file that reads `process.env`; export `{ port, nodeEnv, jwtSecret, maxArticles }` with sane defaults.
-4. Update `app.js` and `services/articlesService.js` to import from `config` instead of reading `process.env`.
+3. `config/index.js` — the **only** file that reads environment variables; export `{ port, nodeEnv, jwtSecret, maxArticles }` with sane defaults.
+4. Update `app.js`, `services/articlesService.js`, and the error middleware to import from `config` instead of reading environment variables directly.
 5. Add `.env.example` (committed) listing every variable, and make sure `.env` is in `.gitignore`.
-
-See `question.md` for the full brief and testing examples.
 
 ## Self-Audit
 
-After refactoring, this should return only `config/index.js`:
-```bash
-grep -rn "process.env" . | grep -v node_modules
-```
+After refactoring, a repository-wide search for direct environment access should return only `config/index.js` (excluding installed dependencies).
