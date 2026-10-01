@@ -7,9 +7,12 @@
  *   - sets it as the "X-Request-Id" response header
  *   - calls next() so the request continues down the pipeline
  */
+const { randomUUID } = require("crypto");
 
-const { randomUUID } = require('crypto');
+function requestId(req, res, next) {
+  req.id = randomUUID();
+  res.setHeader("X-Request-Id", req.id);
+  next();
+}
 
-module.exports = function requestId(req, res, next) {
-  // TODO: implement the four steps described above.
-};
+module.exports = requestId;

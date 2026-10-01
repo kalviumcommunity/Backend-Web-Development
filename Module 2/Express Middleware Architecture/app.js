@@ -29,6 +29,9 @@ const usersRouter = require('./routes/users');
 // const requestId = require('./middleware/requestId');
 // const logger = require('./middleware/logger');
 // const timing = require('./middleware/timing');
+const requestId = require('./middleware/requestId');
+const logger = require('./middleware/logger');
+const timing = require('./middleware/timing');
 
 const app = express();
 
@@ -42,6 +45,9 @@ app.use(express.json());
 //   app.use(requestId);
 //   app.use(logger);
 //   app.use(timing);
+app.use(requestId);
+app.use(logger);
+app.use(timing);
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Two mounted routers (do not remove these).
