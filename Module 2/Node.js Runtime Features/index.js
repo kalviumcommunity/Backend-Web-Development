@@ -23,30 +23,31 @@ const OUTPUT = path.join(__dirname, 'sample-copy.txt');
 
 // ── PART 1: read the whole file into memory, then log its size ──────────────
 function readWholeFile() {
-  // TODO: use fs.readFile(INPUT, callback). With no encoding, the callback
-  //       receives a Buffer.
-  // TODO: if there is an error, log it and return.
-  // TODO: log the size in bytes. A Buffer has a .length property (bytes).
-  //       Example log: "readFile: loaded 524288 bytes into memory".
+  fs.readFile(INPUT, (err, data) => {
+    if (err) {
+      console.error('Error reading file:', err);
+      return;
+    }
+    console.log(`readFile: loaded ${data.length} bytes into memory at once`);
+  });
 }
 
 // ── PART 2: stream the file and pipe it to a writable stream ────────────────
 function streamFile() {
-  // TODO: create a readable stream with fs.createReadStream(INPUT).
-  // TODO: create a writable stream with fs.createWriteStream(OUTPUT).
-  // TODO: pipe the readable into the writable: readable.pipe(writable).
-  // TODO: listen for the writable's "finish" event and log a done message,
-  //       e.g. "stream: finished copying via 64KB chunks (flat memory)".
+  const readable = fs.createReadStream(INPUT);
+  const writable = fs.createWriteStream(OUTPUT);
+
+  readable.pipe(writable);
+
+  writable.on('finish', () => {
+    console.log('stream: finished copying via 64KB chunks (peak memory stays flat)');
+  });
 }
 
 // ── PART 3: explain the difference ──────────────────────────────────────────
-// TODO: In your OWN words, replace this comment with 2 to 3 sentences on WHY
-//       the stream approach is preferable for large files. Mention memory:
-//       readFile holds the whole file at once; the stream moves it in chunks
-//       so peak memory stays flat regardless of file size.
-//
-// YOUR EXPLANATION:
-//
+// When using fs.readFile, the entire file content is buffered into memory at once, meaning memory consumption scales directly with file size and can easily exhaust available RAM on large files.
+// In contrast, streams process and transfer data sequentially in small chunks (defaulting to 64KB), keeping peak memory usage constant and minimal regardless of file size.
+// Therefore, the streaming approach is significantly more memory-efficient, fast, and scalable for handling large files.
 
 // Run both approaches.
 readWholeFile();
