@@ -10,6 +10,14 @@
 
 const { randomUUID } = require('crypto');
 
+// Define and export the middleware
 module.exports = function requestId(req, res, next) {
   // TODO: implement the four steps described above.
+  const id = randomUUID(); // Generate a unique ID for this request
+
+  req.id = id; // Store the ID in req.id so other middleware can access it
+
+  res.setHeader('X-Request-Id', id); // Send the same ID to the client in the response header
+
+  next(); // Move the request to the next middleware or route
 };

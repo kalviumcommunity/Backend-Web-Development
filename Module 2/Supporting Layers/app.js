@@ -19,6 +19,9 @@
 const express = require('express');
 const articlesRouter = require('./routes/articles');
 const errorHandler = require('./middleware/errorHandler');
+//add
+const config = require('./config');
+
 
 const app = express();
 app.use(express.json());
