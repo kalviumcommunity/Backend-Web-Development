@@ -1,8 +1,35 @@
-const store = require('../data/postStore');
+const store = require("../data/postStore");
+
+const DEFAULT_LIMIT = 2;
+const MAX_LIMIT = 10;
 
 function listPosts(query = {}) {
-  // intentionally poor design: no pagination, no metadata, no contract standardisation
-  return store.getAllPosts();
+  const requestedLimit = Number.parseInt(query.limit, 10);
+  const requestedPage = Number.parseInt(query.page, 10);
+
+  const limit = Math.min(
+    Math.max(requestedLimit || DEFAULT_LIMIT, 1),
+    MAX_LIMIT
+  );
+
+  const page = Math.max(requestedPage || 1, 1);
+
+  const allPosts = store.getAllPosts();
+  const total = allPosts.length;
+  const totalPages = Math.ceil(total / limit);
+  const start = (page - 1) * limit;
+
+  return {
+    posts: allPosts.slice(start, start + limit),
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
 }
 
 function getPost(id) {
@@ -12,25 +39,16 @@ function getPost(id) {
 function createPost(body = {}) {
   return store.createPost({
     title: body.title,
-    author: body.author
+    author: body.author,
   });
 }
 
 function likePost(id) {
-  const post = store.incrementLikes(id);
-  if (!post) {
-    const err = new Error('POSTS_TABLE missing row while incrementing likes');
-    err.statusCode = 500;
-    err.debug = 'FakeStack: at postService.js:19:11';
-    throw err;
-  }
-  return post;
+  return store.incrementLikes(id);
 }
 
 function explode() {
-  const err = new Error('SQLITE_CONSTRAINT in posts table');
-  err.statusCode = 500;
-  throw err;
+  throw new Error("Internal failure");
 }
 
 module.exports = {
@@ -38,5 +56,5 @@ module.exports = {
   getPost,
   createPost,
   likePost,
-  explode
+  explode,
 };
