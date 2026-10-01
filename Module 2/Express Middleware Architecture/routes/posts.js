@@ -11,12 +11,12 @@
 const express = require('express');
 const router = express.Router();
 
-// const auditWrite = require('../middleware/auditWrite');
+const auditWrite = require('../middleware/auditWrite');
 
 const posts = [{ id: 1, title: 'Hello World' }];
 
 // Public read — no extra middleware.
-router.get('/', (req, res) => {
+router.get('/', auditWrite,(req, res) => {
   res.json({ data: posts });
 });
 
