@@ -19,7 +19,9 @@ const app = express();
 app.use(express.json());
 app.use(auth); // sets req.userId
 
+app.get('/', (req, res) => res.json({ status: 'ok' }));
 app.use('/posts', postsRouter);
+app.use('/api/posts', postsRouter);
 
 // unmatched route -> 404 through the error pipeline
 const AppError = require('./utils/AppError');
