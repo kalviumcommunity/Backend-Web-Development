@@ -28,6 +28,13 @@ function readWholeFile() {
   // TODO: if there is an error, log it and return.
   // TODO: log the size in bytes. A Buffer has a .length property (bytes).
   //       Example log: "readFile: loaded 524288 bytes into memory".
+  fs.readFile(INPUT,(err,data)=>{
+    if(err){
+      console.log(err);
+      return;
+    }
+    console.log(`readFile: loaded ${data.length} bytes into memory at once`);
+  })
 }
 
 // ── PART 2: stream the file and pipe it to a writable stream ────────────────
@@ -37,6 +44,12 @@ function streamFile() {
   // TODO: pipe the readable into the writable: readable.pipe(writable).
   // TODO: listen for the writable's "finish" event and log a done message,
   //       e.g. "stream: finished copying via 64KB chunks (flat memory)".
+  const read=fs.createReadStream(INPUT);
+  const write=fs.createWriteStream(OUTPUT);
+  read.pipe(write);
+  write.on("finish", () => {
+    console.log("stream: finished copying via 64KB chunks (peak memory stays flat)");
+});
 }
 
 // ── PART 3: explain the difference ──────────────────────────────────────────
@@ -46,7 +59,8 @@ function streamFile() {
 //       so peak memory stays flat regardless of file size.
 //
 // YOUR EXPLANATION:
-//
+//Basically readFile loads the entire file into node.js RAM at once,so the memory increases according to file size.
+//Streams move the file in smaller chunks, so only small amount of data needs to be in memory at a time and peak memory relatively stays flatten for very large files. 
 
 // Run both approaches.
 readWholeFile();
