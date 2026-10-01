@@ -23,30 +23,38 @@ const OUTPUT = path.join(__dirname, 'sample-copy.txt');
 
 // ── PART 1: read the whole file into memory, then log its size ──────────────
 function readWholeFile() {
-  // TODO: use fs.readFile(INPUT, callback). With no encoding, the callback
-  //       receives a Buffer.
-  // TODO: if there is an error, log it and return.
-  // TODO: log the size in bytes. A Buffer has a .length property (bytes).
-  //       Example log: "readFile: loaded 524288 bytes into memory".
+  // fs.readFile with no encoding returns a Buffer (raw bytes).
+  // buf.length gives the size in bytes — the whole file is in RAM at once.
+  fs.readFile(INPUT, (err, data) => {
+    if (err) return console.error('readFile error:', err.message);
+    console.log(`readFile: loaded ${data.length} bytes into memory`);
+  });
 }
 
 // ── PART 2: stream the file and pipe it to a writable stream ────────────────
 function streamFile() {
-  // TODO: create a readable stream with fs.createReadStream(INPUT).
-  // TODO: create a writable stream with fs.createWriteStream(OUTPUT).
-  // TODO: pipe the readable into the writable: readable.pipe(writable).
-  // TODO: listen for the writable's "finish" event and log a done message,
-  //       e.g. "stream: finished copying via 64KB chunks (flat memory)".
+  // Create a readable stream (source) and a writable stream (destination).
+  // .pipe() connects them: chunks flow from source → destination automatically.
+  // Only one small chunk lives in memory at any moment — peak memory stays flat.
+  const read = fs.createReadStream(INPUT);
+  const write = fs.createWriteStream(OUTPUT);
+
+  read.pipe(write);
+
+  write.on('finish', () => {
+    console.log('stream: finished copying via 64KB chunks (flat memory)');
+  });
+
+  read.on('error', (err) => console.error('Read stream error:', err.message));
+  write.on('error', (err) => console.error('Write stream error:', err.message));
 }
 
 // ── PART 3: explain the difference ──────────────────────────────────────────
-// TODO: In your OWN words, replace this comment with 2 to 3 sentences on WHY
-//       the stream approach is preferable for large files. Mention memory:
-//       readFile holds the whole file at once; the stream moves it in chunks
-//       so peak memory stays flat regardless of file size.
-//
 // YOUR EXPLANATION:
-//
+// fs.readFile loads the entire file into a single Buffer in memory all at once,
+// which means peak memory consumption scales directly with the file size.
+// In contrast, streams process data chunk-by-chunk (e.g. 64KB at a time),
+// keeping peak RAM usage flat and lightweight regardless of how large the file is.
 
 // Run both approaches.
 readWholeFile();
