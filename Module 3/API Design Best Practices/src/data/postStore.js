@@ -32,13 +32,18 @@ function createPost({ title, author }) {
     likes: 0,
     createdAt: posts.length + 1
   };
+
   posts.push(post);
   return post;
 }
 
 function incrementLikes(id) {
   const post = getPostById(id);
-  if (!post) return null;
+
+  if (!post) {
+    return null;
+  }
+
   post.likes += 1;
   return post;
 }
