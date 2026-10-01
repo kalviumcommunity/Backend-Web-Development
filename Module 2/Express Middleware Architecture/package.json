@@ -6,11 +6,17 @@
   "scripts": {
     "start": "node app.js"
   },
-  "keywords": ["express", "middleware", "logger", "request-id", "timing", "pipeline"],
+  "keywords": [
+    "express",
+    "middleware",
+    "logger",
+    "request-id",
+    "timing",
+    "pipeline"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2"
-  },
-  "devDependencies": {}
+    "express": "^4.22.2"
+  }
 }
