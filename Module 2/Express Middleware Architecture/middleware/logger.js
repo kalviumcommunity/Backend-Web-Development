@@ -14,5 +14,13 @@
  */
 
 module.exports = function logger(req, res, next) {
-  // TODO: register res.on('finish', ...) to log method, path, status, then next().
+  // Wait until the response is finished.
+  res.on('finish', () => {
+    // Get the first 8 characters of the request ID.
+    const id = req.id ? `[${req.id.slice(0, 8)}] ` : '';
+    // Print method, path, and status.
+    console.log(`${id}${req.method} ${req.path} ${res.statusCode}`);
+  });
+  // Continue immediately.
+  next();
 };

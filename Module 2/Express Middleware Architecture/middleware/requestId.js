@@ -11,5 +11,13 @@
 const { randomUUID } = require('crypto');
 
 module.exports = function requestId(req, res, next) {
-  // TODO: implement the four steps described above.
+  // TODO: implement the four steps described above
+  const id = randomUUID();
+  //storethe id in the request.
+  req.id = id;
+  //send th ei d in the response header.
+  res.setHeader('X-Request-Id', id);
+
+  //move to the next middleware.
+  next();
 };
