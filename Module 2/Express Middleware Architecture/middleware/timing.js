@@ -13,4 +13,16 @@
 
 module.exports = function timing(req, res, next) {
   // TODO: capture start, register res.on('finish', ...) to log elapsed ms, then next().
+  const start = Date.now(); // Record the time when the request enters this middleware
+
+  res.on('finish', () => { // Run this function when the response has finished
+
+    const elapsed = Date.now() - start; // Calculate how many milliseconds the request took
+
+    const id = req.id ? `[${req.id.slice(0, 8)}] ` : ''; // Get first 8 characters of request ID
+
+    console.log(`${id}${req.method} ${req.path} took ${elapsed}ms`); // Log method, path and execution time
+  });
+
+  next(); // Continue immediately without waiting for the response
 };
