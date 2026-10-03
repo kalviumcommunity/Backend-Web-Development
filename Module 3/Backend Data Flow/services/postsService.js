@@ -16,5 +16,23 @@ exports.create = async ({ authorId, title, body }) => repo.insert({ authorId, ti
  * Only when all guards pass: return repo.update(postId, changes).
  */
 exports.editPost = async (postId, userId, changes) => {
-  throw new AppError('editPost is not implemented yet', 501);
+  const post = await repo.findById(postId);
+
+  // 1. Post must exist
+  if (!post) {
+    throw new AppError('Post not found', 404);
+  }
+
+  // 2. Only the author can edit
+  if (post.authorId !== userId) {
+    throw new AppError('You can only edit your own post', 403);
+  }
+
+  // 3. Post must be within 24 hours
+  if (Date.now() - post.createdAt > EDIT_WINDOW_MS) {
+    throw new AppError('Post can no longer be edited', 403);
+  }
+
+  // All checks passed
+  return repo.update(postId, changes);
 };
