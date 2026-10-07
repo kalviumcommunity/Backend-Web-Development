@@ -9,7 +9,7 @@ exports.create = async ({ authorId, title, body }) => repo.insert({ authorId, ti
 /**
  * TODO (Domain rule): edit a post.
  * Implement these guards IN ORDER, each throwing an AppError, before any write:
- *   1. The post must exist          -> AppError('Post not found', 404)
+ *   1. The post must exist       -> AppError('Post not found', 404)
  *   2. Only the author may edit it  -> AppError('You can only edit your own post', 403)
  *   3. It must be within the window  -> AppError('Post can no longer be edited', 403)
  *      (now - post.createdAt must be <= EDIT_WINDOW_MS)
