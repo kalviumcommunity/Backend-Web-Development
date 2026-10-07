@@ -2,34 +2,37 @@ const service = require('../services/postService');
 const http = require('../utils/http');
 
 function listPosts(req, res) {
-  const rows = service.listPosts(req.query);
-  return http.sendList(res, rows);
+  const { rows, meta } = service.listPosts(req.query);
+  return http.sendList(res, rows, meta);
 }
 
 function getPost(req, res) {
   const post = service.getPost(req.params.id);
   if (!post) {
-    return http.sendError(res, 404, { message: 'post missing' });
+    return http.sendError(res, 404, 'NOT_FOUND', 'Post not found');
   }
-  return http.sendOk(res, post);
+  return http.sendData(res, post);
 }
 
 function createPost(req, res) {
-  const post = service.createPost(req.body);
-  return http.sendCreated(res, post);
+  const body = req.body || {};
+  if (typeof body.title !== 'string' || body.title.trim() === '') {
+    return http.sendError(res, 400, 'VALIDATION_ERROR', 'title is required');
+  }
+  const post = service.createPost(body);
+  return http.sendData(res, post, 201);
 }
 
 function likePost(req, res) {
   const post = service.likePost(req.params.id);
-  return http.sendOk(res, { ok: true, likes: post.likes });
+  if (!post) {
+    return http.sendError(res, 404, 'NOT_FOUND', 'Post not found');
+  }
+  return http.sendData(res, post, 201);
 }
 
 function explode(req, res) {
-  try {
-    service.explode();
-  } catch (err) {
-    return http.sendError(res, 500, { error: err.message, stack: err.debug || err.stack });
-  }
+  service.explode();
 }
 
 module.exports = {
