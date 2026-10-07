@@ -9,3 +9,4 @@ module.exports = {
   posts,
   nextId: () => nextId++,
 };
+
