@@ -8,12 +8,12 @@
     "start": "node src/app.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "bcryptjs": "^3.0.2",
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.5.0",
     "express": "^4.21.2"
   },
   "devDependencies": {
-    "prisma": "^5.22.0"
+    "prisma": "^6.19.3"
   }
 }
