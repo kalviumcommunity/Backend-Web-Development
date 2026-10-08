@@ -1,4 +1,4 @@
-const postsRepo = require('./../repository/postsRepo');
+/* const postsRepo = require('./../repository/postsRepo');
 const commentsRepo = require('./../repository/commentsRepo');
 const AppError = require('./../utils/AppError');
 
@@ -12,6 +12,41 @@ const AppError = require('./../utils/AppError');
  *   5. return the created comment
  * No write may happen before both checks pass.
  */
-exports.addComment = async (postId, userId, body) => {
+/* exports.addComment = async (postId, userId, body) => {
   throw new AppError('addComment is not implemented yet', 501);
+}; 
+*/
+const postsRepo = require('./../repository/postsRepo');
+const commentsRepo = require('./../repository/commentsRepo');
+const AppError = require('./../utils/AppError');
+
+/**
+ * Multi-step workflow: add a comment to a post.
+ * Guards first, then writes in order.
+ */
+exports.addComment = async (postId, userId, body) => {
+  // 1. The post must exist
+  const post = postsRepo.findById(postId);
+  if (!post) {
+    throw new AppError('Post not found', 404);
+  }
+
+  // 2. The post must not be locked
+  if (post.locked) {
+    throw new AppError('Post is locked for new comments', 409);
+  }
+
+  // 3. Insert the comment
+  const comment = commentsRepo.insert({
+    postId,
+    authorId: userId,
+    body
+  });
+
+  // 4. Bump the post's comment count
+  postsRepo.incrementCommentCount(postId);
+
+  // 5. Return the created comment
+  return comment;
 };
+
