@@ -1,8 +1,45 @@
 const store = require('../data/postStore');
 
+const DEFAULT_LIMIT = 2;
+const MAX_LIMIT = 100;
+
+function invalidPagination(name) {
+  const err = new Error(`Invalid ${name}`);
+  err.statusCode = 400;
+  err.publicCode = 'INVALID_PAGINATION';
+  err.publicMessage = `${name} must be a positive integer`;
+  return err;
+}
+
+function parsePositiveInteger(value, fallback, name) {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) {
+    throw invalidPagination(name);
+  }
+  return Number(value);
+}
+
 function listPosts(query = {}) {
-  // intentionally poor design: no pagination, no metadata, no contract standardisation
-  return store.getAllPosts();
+  const page = parsePositiveInteger(query.page, 1, 'page');
+  if (!Number.isSafeInteger(page)) throw invalidPagination('page');
+  const requestedLimit = parsePositiveInteger(query.limit, DEFAULT_LIMIT, 'limit');
+  const limit = Math.min(requestedLimit, MAX_LIMIT);
+  const allPosts = store.getAllPosts();
+  const total = allPosts.length;
+  const totalPages = Math.ceil(total / limit);
+  const start = (page - 1) * limit;
+
+  return {
+    posts: allPosts.slice(start, start + limit),
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1
+    }
+  };
 }
 
 function getPost(id) {
@@ -17,20 +54,11 @@ function createPost(body = {}) {
 }
 
 function likePost(id) {
-  const post = store.incrementLikes(id);
-  if (!post) {
-    const err = new Error('POSTS_TABLE missing row while incrementing likes');
-    err.statusCode = 500;
-    err.debug = 'FakeStack: at postService.js:19:11';
-    throw err;
-  }
-  return post;
+  return store.incrementLikes(id);
 }
 
 function explode() {
-  const err = new Error('SQLITE_CONSTRAINT in posts table');
-  err.statusCode = 500;
-  throw err;
+  throw new Error('Simulated internal failure');
 }
 
 module.exports = {

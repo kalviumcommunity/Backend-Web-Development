@@ -64,3 +64,34 @@ After refactor, manually verify:
 - missing resource returns structured 404
 - internal failure returns safe 500 without stack / fake DB leakage
 - old verb routes are gone from public contract
+
+## API Contract
+
+All successful responses use a `data` property. The list response also includes
+`meta` pagination details:
+
+```json
+{
+  "data": [{ "id": 1, "title": "Caching 101", "author": "maya", "likes": 0, "createdAt": 1 }],
+  "meta": {
+    "page": 1,
+    "limit": 2,
+    "total": 5,
+    "totalPages": 3,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
+Errors use `{ "error": { "code": "...", "message": "..." } }`. Internal
+failures are logged by the server and return a generic message without internal
+details.
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/posts?page=1&limit=2` | List posts (`limit` is capped at 100) |
+| `GET` | `/posts/:id` | Fetch one post |
+| `POST` | `/posts` | Create a post with `title` and `author` |
+| `POST` | `/posts/:id/likes` | Add a like to a post |
+| `GET` | `/_demo/internal-error` | Trigger a safe internal-error response for demonstration |
