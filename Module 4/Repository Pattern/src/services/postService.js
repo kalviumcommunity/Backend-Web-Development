@@ -1,12 +1,18 @@
-const postStore = require('../data/postStore');
+//const postStore = require('../data/postStore');//.. means it will help in fetch the particular data fom import
+const postRepository = require('../repositories/postRepository');
+
+
+function getPost(id) {
+  return postRepository.findById(id);
+}
 
 function listPosts() {
   return postStore.posts;
 }
 
-function getPost(id) {
-  return postStore.posts.find((post) => post.id === Number(id)) || null;
-}
+// function getPost(id) {
+//   return postStore.posts.find((post) => post.id === Number(id)) || null;
+// }
 
 function createPost(fields) {
   if (!fields || !fields.title) {
