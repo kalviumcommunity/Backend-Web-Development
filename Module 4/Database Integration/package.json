@@ -6,13 +6,21 @@
     "start": "node src/app.js",
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name initial_community_schema",
+    "prisma:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0"
   },
   "devDependencies": {
     "prisma": "^6.9.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }
