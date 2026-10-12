@@ -1,11 +1,11 @@
-const postStore = require('../data/postStore');
+const postRepository = require('../data/postRepository');
 
 function listPosts() {
-  return postStore.posts;
+  return postRepository.listPosts();
 }
 
 function getPost(id) {
-  return postStore.posts.find((post) => post.id === Number(id)) || null;
+  return postRepository.getPost(id);
 }
 
 function createPost(fields) {
@@ -15,29 +15,19 @@ function createPost(fields) {
     throw error;
   }
 
-  const post = {
-    id: postStore.nextId(),
+  return postRepository.createPost({
     title: fields.title,
     body: fields.body || '',
     authorId: fields.authorId,
-  };
-  postStore.posts.push(post);
-  return post;
+  });
 }
 
 function updatePost(id, patch) {
-  const post = getPost(id);
-  if (!post) return null;
-  if (patch.title !== undefined) post.title = patch.title;
-  if (patch.body !== undefined) post.body = patch.body;
-  return post;
+  return postRepository.updatePost(id, patch);
 }
 
 function removePost(id) {
-  const index = postStore.posts.findIndex((post) => post.id === Number(id));
-  if (index === -1) return false;
-  postStore.posts.splice(index, 1);
-  return true;
+  return postRepository.removePost(id);
 }
 
 module.exports = { listPosts, getPost, createPost, updatePost, removePost };

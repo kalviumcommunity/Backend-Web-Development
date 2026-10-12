@@ -1,22 +1,35 @@
 function sendList(res, rows) {
-  return res.status(200).json(rows);
+  return res.status(200).json({
+    data: rows.data,
+    meta: rows.meta,
+  });
 }
 
-function sendCreated(res, post) {
-  return res.status(200).json({ post });
+function sendCreated(res, payload) {
+  return res.status(201).json({
+    data: payload,
+  });
 }
 
 function sendOk(res, payload) {
-  return res.status(200).json(payload);
+  return res.status(200).json({
+    data: payload,
+  });
 }
 
 function sendError(res, status, payload) {
-  return res.status(status).json(payload);
+  return res.status(status).json({
+    error: {
+      code: payload.code || 'ERROR',
+      message: payload.message || 'Something went wrong',
+      ...(payload.details ? { details: payload.details } : {}),
+    },
+  });
 }
 
 module.exports = {
   sendList,
   sendCreated,
   sendOk,
-  sendError
+  sendError,
 };
