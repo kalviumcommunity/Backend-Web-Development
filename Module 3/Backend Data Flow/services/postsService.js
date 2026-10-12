@@ -18,3 +18,9 @@ exports.create = async ({ authorId, title, body }) => repo.insert({ authorId, ti
 exports.editPost = async (postId, userId, changes) => {
   throw new AppError('editPost is not implemented yet', 501);
 };
+exports.deletePost = async (postId, userId) => {
+  const post = await repo.findById(postId);
+  if (!post) throw new AppError('Post not found', 404);
+  if (post.authorId !== userId) throw new AppError('You can only delete your own post', 403);
+  return repo.delete(postId);
+}       
