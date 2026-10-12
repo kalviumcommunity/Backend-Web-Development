@@ -1,0 +1,12 @@
+# Environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies
+**/node_modules/
+**/package-lock.json
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
