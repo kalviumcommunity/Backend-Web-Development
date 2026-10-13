@@ -1,36 +1,74 @@
-const seed = require('../data/postSeed');
 
-// Starter implementation: same async contract, temporary in-memory storage.
-const posts = seed.map((post) => ({ ...post }));
-let nextId = posts.reduce((max, post) => Math.max(max, post.id), 0) + 1;
+const prisma = require('../db/prisma');
 
 async function findAll() {
-  return posts.map((post) => ({ ...post }));
+  return prisma.post.findMany({
+    orderBy: { id: 'asc' },
+  });
 }
 
 async function findById(id) {
-  return posts.find((post) => post.id === Number(id)) || null;
+  return prisma.post.findUnique({
+    where: { id: Number(id) },
+  });
 }
 
 async function create(fields) {
-  const post = { id: nextId++, title: fields.title, body: fields.body || '', authorId: fields.authorId };
-  posts.push(post);
-  return { ...post };
+  try {
+    return await prisma.post.create({
+      data: {
+        title: fields.title,
+        body: fields.body || '',
+        authorId: Number(fields.authorId),
+      },
+    });
+  } catch (error) {
+    if (error.code === 'P2003') {
+      const safeError = new Error('Invalid authorId: author does not exist');
+      safeError.statusCode = 400;
+      throw safeError;
+    }
+
+    if (error.code === 'P2002') {
+      const safeError = new Error('A record with these details already exists');
+      safeError.statusCode = 409;
+      throw safeError;
+    }
+
+    throw error;
+  }
 }
 
 async function update(id, patch) {
-  const post = posts.find((candidate) => candidate.id === Number(id));
-  if (!post) return null;
-  if (patch.title !== undefined) post.title = patch.title;
-  if (patch.body !== undefined) post.body = patch.body;
-  return { ...post };
+  const existing = await findById(id);
+  if (!existing) return null;
+
+  const data = {};
+
+  if (patch.title !== undefined) data.title = patch.title;
+  if (patch.body !== undefined) data.body = patch.body;
+
+  return prisma.post.update({
+    where: { id: Number(id) },
+    data,
+  });
 }
 
 async function remove(id) {
-  const index = posts.findIndex((post) => post.id === Number(id));
-  if (index === -1) return false;
-  posts.splice(index, 1);
+  const existing = await findById(id);
+  if (!existing) return false;
+
+  await prisma.post.delete({
+    where: { id: Number(id) },
+  });
+
   return true;
 }
 
-module.exports = { findAll, findById, create, update, remove };
+module.exports = {
+  findAll,
+  findById,
+  create,
+  update,
+  remove,
+};
