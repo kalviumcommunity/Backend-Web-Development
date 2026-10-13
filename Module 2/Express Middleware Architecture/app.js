@@ -31,6 +31,9 @@ const usersRouter = require('./routes/users');
 // const timing = require('./middleware/timing');
 
 const app = express();
+const requestId = require('./middleware/requestId');
+const logger = require('./middleware/logger');
+const timing = require('./middleware/timing');
 
 // Built-in body parser so POST /posts can read req.body (already provided).
 app.use(express.json());
@@ -45,6 +48,10 @@ app.use(express.json());
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Two mounted routers (do not remove these).
+app.use(requestId);
+app.use(logger);
+app.use(timing); 
+
 app.use('/posts', postsRouter);
 app.use('/users', usersRouter);
 
