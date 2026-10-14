@@ -5,7 +5,7 @@ const AppError = require('./../utils/AppError');
 /**
  * TODO (Multi-step workflow): add a comment to a post.
  * Model this as an ordered sequence of service methods, ALL CHECKS BEFORE ANY WRITE:
- *   1. The post must exist            -> AppError('Post not found', 404)
+ *   1. The post must exist       -> AppError('Post not found', 404)
  *   2. The post must not be locked    -> AppError('Post is locked for new comments', 409)
  *   3. THEN insert the comment        -> commentsRepo.insert({ postId, authorId: userId, body })
  *   4. THEN bump the post's count     -> postsRepo.incrementCommentCount(postId)

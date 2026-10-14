@@ -5,7 +5,7 @@ const AppError = require('./../utils/AppError');
 /**
  * TODO (Domain rule): cast a vote, one per user per post.
  * Implement these guards before writing:
- *   1. The post must exist                 -> AppError('Post not found', 404)
+ *   1. The post must exist           -> AppError('Post not found', 404)
  *   2. The user must not have voted already -> AppError('You have already voted on this post', 409)
  * Only when both pass: return votesRepo.insert(postId, userId).
  */
