@@ -3,34 +3,71 @@ const postRoutes = require('./routes/postRoutes');
 const { resetData } = require('./data/postStore');
 const controller = require('./controllers/postController');
 
-function createApp() {
-  const app = express();
-  app.use(express.json());
+const service = require('../services/postService');
+const http = require('../utils/http');
 
-  app.use('/', postRoutes);
-  app.get('/explode', controller.explode);
 
-  // TODO:
-  // - make public contract resource-oriented
-  // - standardise success envelope
-  // - standardise error envelope
-  // - add pagination metadata on list route
-  // - cap limit server-side (default limit = 2 for exercise)
-  // - stop exposing old verb routes as public contract
-  // - expose safe internal failure route for testing/demo
+function listPosts(req, res) {
+  const result = service.listPosts(req.query);
 
-  return app;
+  const meta = {
+    page: result.page,
+    limit: result.limit,
+    total: result.total,
+    totalPages: Math.ceil(result.total / result.limit)
+  };
+
+  return http.sendList(res, result.data, meta);
 }
 
-if (require.main === module) {
-  const app = createApp();
-  const port = 3000;
-  app.listen(port, () => {
-    console.log(`Starter API listening on port ${port}`);
-  });
+
+function getPost(req, res) {
+  const post = service.getPost(req.params.id);
+  if (!post) {
+    return http.sendError(res, 404, { message: 'post missing' });
+  }
+  return http.sendOk(res, post);
 }
+
+function createPost(req, res) {
+  const post = service.createPost(req.body);
+  return http.sendCreated(res, post);
+}
+
+function likePost(req, res) {
+  const post = service.likePost(req.params.id);
+  return http.sendOk(res, { ok: true, likes: post.likes });
+
+}
+
+
+
+
+//function explode(req, res) {
+  //try {
+    //service.explode();
+  //} catch (err) {
+    //return http.sendError(res, 500, { error: err.message, stack: err.debug || err.stack });
+  //}
+//}
+
+function explode(req, res, next) {
+  try {
+    service.explode();
+
+    return http.sendOk(res, {
+      message: 'Test completed'
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 
 module.exports = {
-  createApp,
-  resetData
+  listPosts,
+  getPost,
+  createPost,
+  likePost,
+  explode
 };
