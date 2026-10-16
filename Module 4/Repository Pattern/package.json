@@ -5,6 +5,9 @@
   "description": "LU41 Repository Pattern assignment starter",
   "main": "src/controllers/postController.js",
   "scripts": {
-    "start": "node src/controllers/postController.js"
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }
