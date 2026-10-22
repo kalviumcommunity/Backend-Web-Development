@@ -1,8 +1,3 @@
-/**
- * Users router (already written). Mounted at /users in app.js.
- * You do not need to edit this file.
- */
-
 const express = require('express');
 const router = express.Router();
 

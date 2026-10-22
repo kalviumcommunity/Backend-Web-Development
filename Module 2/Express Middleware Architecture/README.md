@@ -1,25 +1,30 @@
 # Express Middleware Pipeline — Observability Shield
 
-Implement logging, request ID tracing, and performance timing middleware on a modular Express application.
+Completed solution for the Kalvium Express Middleware Architecture assignment.
 
-## Quick Start
+## Run
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the server:
-   ```bash
-   npm start
-   ```
+```bash
+npm install
+npm start
+```
 
-## Tasks
+The server listens on `http://localhost:3000`.
 
-Open the files and complete the following TODO blocks:
-1. `middleware/requestId.js` — Generate and attach UUIDs to `req.id` and response headers.
-2. `middleware/logger.js` — Log request info on response `'finish'`.
-3. `middleware/timing.js` — Log execution duration on response `'finish'`.
-4. `app.js` — Mount the global middleware in the correct order before the routers.
-5. `routes/posts.js` — Mount the `auditWrite` middleware per-route on the `POST` endpoint only.
+## Try the API
 
-See `question.md` for the full brief and testing examples.
+```bash
+curl -i http://localhost:3000/posts
+curl -i -X POST http://localhost:3000/posts -H "Content-Type: application/json" -d "{\"title\":\"Hi\"}"
+curl -i http://localhost:3000/users
+```
+
+Each response includes an `X-Request-Id` header. The server logs request method/path/status and elapsed time. The `[AUDIT]` message is emitted only for `POST /posts`.
+
+## Files completed
+
+- `middleware/requestId.js`: creates a UUID and attaches it to `req.id` and `X-Request-Id`.
+- `middleware/logger.js`: logs method, path, and response status after the response finishes.
+- `middleware/timing.js`: logs elapsed milliseconds after the response finishes.
+- `app.js`: mounts request ID, logger, and timing globally before the routers.
+- `routes/posts.js`: mounts `auditWrite` on POST only.
