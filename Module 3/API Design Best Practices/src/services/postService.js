@@ -1,10 +1,9 @@
 const store = require('../data/postStore');
 
 function listPosts(query = {}) {
-  const page = Math.max(Number(query.page) || 1, 1);
+  const page = Math.max(Number.parseInt(query.page, 10) || 1, 1);
 
-  // Default limit = 2, maximum limit = 2
-  const requestedLimit = Number(query.limit) || 2;
+  const requestedLimit = Number.parseInt(query.limit, 10) || 2;
   const limit = Math.min(Math.max(requestedLimit, 1), 2);
 
   const allPosts = store.getAllPosts();
@@ -38,20 +37,11 @@ function createPost(body = {}) {
 }
 
 function likePost(id) {
-  const post = store.incrementLikes(id);
-
-  if (!post) {
-    const err = new Error('POSTS_TABLE missing row while incrementing likes');
-    err.statusCode = 500;
-    err.debug = 'FakeStack: at postService.js:19:11';
-    throw err;
-  }
-
-  return post;
+  return store.incrementLikes(id);
 }
 
 function explode() {
-  const err = new Error('SQLITE_CONSTRAINT in posts table');
+  const err = new Error('Internal database failure');
   err.statusCode = 500;
   throw err;
 }

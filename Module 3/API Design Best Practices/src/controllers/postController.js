@@ -30,29 +30,20 @@ function createPost(req, res) {
 }
 
 function likePost(req, res) {
-  try {
-    const post = service.likePost(req.params.id);
+  const post = service.likePost(req.params.id);
 
-    if (!post) {
-      return http.sendError(res, 404, {
-        code: 'NOT_FOUND',
-        message: 'Post not found'
-      });
-    }
-
-    return http.sendCreated(res, {
-      postId: post.id,
-      likes: post.likes
-    });
-  } catch (err) {
-    console.error(err);
-
-    return http.sendError(res, 500, {
-      code: 'INTERNAL_ERROR',
-      message: 'Something went wrong'
+  if (!post) {
+    return http.sendError(res, 404, {
+      code: 'NOT_FOUND',
+      message: 'Post not found'
     });
   }
-} 
+
+  return http.sendOk(res, {
+    postId: post.id,
+    likes: post.likes
+  });
+}
 
 function explode(req, res) {
   try {
@@ -62,7 +53,7 @@ function explode(req, res) {
       message: 'Success'
     });
   } catch (err) {
-    console.error(err);
+    console.error('Internal API error');
 
     return http.sendError(res, 500, {
       code: 'INTERNAL_ERROR',
