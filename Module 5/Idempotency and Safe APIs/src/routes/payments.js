@@ -1,34 +1,34 @@
-'use strict';
-// routes/payments.js
-//
-// YOUR TASK: make POST /payments idempotent.
-//
-// Right now this handler charges the card on EVERY request, so a retried request
-// (same purchase, sent twice because of a lost response or a double-tap) creates a
-// duplicate charge. Fix it using an Idempotency-Key so a retry is processed exactly once.
-//
-// The in-memory helpers you need are in ../store:
-//   idempotency  — a Map you use as  key -> { status, body }
-//   charges      — the array of REAL charges (push once per real charge)
-//   nextChargeId — returns a fresh 'ch_N' id
-//
-// Implement these four rules (checked by the tests):
-//   1. MISSING key   -> respond 400 with { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', ... } }
-//   2. REPEAT key    -> return the stored response; do NOT create a new charge
-//   3. NEW key       -> create exactly ONE charge, store { status, body } under the key, return it
-//   4. DIFFERENT key -> a separate operation (falls out of rules 2 and 3 naturally)
-//
-// Hint: read the key from  req.headers['idempotency-key'].
+const express = require("express");
+const router = express.Router();
+const store = require("../store");
 
-const router = require('express').Router();
-const { charges, idempotency, nextChargeId } = require('../store');
+router.post("/", (req, res) => {
+  const key = req.headers["idempotency-key"];
 
-router.post('/', (req, res) => {
-  // TODO: implement rules 1-3 above. The stub below always charges — remove it.
-  const amount = req.body && req.body.amount;
-  const charge = { id: nextChargeId(), amount, status: 'charged' };
-  charges.push(charge);
-  return res.status(201).json({ id: charge.id, amount: charge.amount, status: charge.status });
+  // Rule 1: Missing key -> Return 400 Validation Error
+  if (!key) {
+    return res.status(400).json({
+      error: {
+        code: "IDEMPOTENCY_KEY_REQUIRED",
+        message: "Idempotency-Key header is required",
+      },
+    });
+  }
+
+  // Rule 2: Repeat key -> Return cached response (no duplicate charge)
+  if (store.idempotency.has(key)) {
+    const saved = store.idempotency.get(key);
+    return res.status(saved.status).json(saved.body);
+  }
+
+  // Rules 3 & 4: New key -> Execute charge once, store result, return 201
+  const chargeId = store.nextChargeId();
+  const body = { id: chargeId, status: "charged" };
+
+  store.charges.push({ id: chargeId, ...req.body });
+  store.idempotency.set(key, { status: 201, body });
+
+  return res.status(201).json(body);
 });
 
 module.exports = router;
