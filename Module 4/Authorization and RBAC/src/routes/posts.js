@@ -1,8 +1,13 @@
 const express = require('express');
 const { posts } = require('../data');
-// const requireRole = require('../middleware/requireRole'); // TODO: use for the hide route
+const requireRole = require('../middleware/requireRole');
 
 const router = express.Router();
+const privilegedRoles = ['moderator', 'admin'];
+
+function canModifyPost(post, user) {
+  return post.authorId === user.id || privilegedRoles.includes(user.role);
+}
 
 // List posts — any authenticated user.
 router.get('/', (req, res) => {
@@ -23,25 +28,34 @@ router.post('/', (req, res) => {
 
 // Update a post.
 // BUG: any authenticated user can edit ANY post — this is the IDOR.
-// TODO: allow only the owner OR a moderator/admin. Return 404 if the post is missing.
 router.patch('/:id', (req, res) => {
   const post = posts.find((p) => p.id === req.params.id);
+  if (!post) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Post not found' } });
+  if (!canModifyPost(post, req.user)) {
+    return res
+      .status(403)
+      .json({ error: { code: 'FORBIDDEN', message: 'You do not have permission to modify this post' } });
+  }
   post.title = req.body?.title ?? post.title;
   return res.status(200).json(post);
 });
 
 // Delete a post.
 // BUG: same IDOR — any authenticated user can delete ANY post.
-// TODO: allow only the owner OR a moderator/admin. Return 404 if the post is missing.
 router.delete('/:id', (req, res) => {
   const idx = posts.findIndex((p) => p.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Post not found' } });
+  if (!canModifyPost(posts[idx], req.user)) {
+    return res
+      .status(403)
+      .json({ error: { code: 'FORBIDDEN', message: 'You do not have permission to modify this post' } });
+  }
   posts.splice(idx, 1);
   return res.status(200).json({ ok: true });
 });
 
 // Hide a post — should be moderator/admin only.
-// TODO: gate with requireRole('moderator', 'admin').
-router.post('/:id/hide', (req, res) => {
+router.post('/:id/hide', requireRole(...privilegedRoles), (req, res) => {
   const post = posts.find((p) => p.id === req.params.id);
   if (!post) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Post not found' } });
   post.hidden = true;
