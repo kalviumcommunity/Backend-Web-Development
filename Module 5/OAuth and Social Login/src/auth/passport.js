@@ -45,16 +45,45 @@ const { users, nextId } = require('../data');
 // Hint: use Array.prototype.find() on `users`. No database, no await needed.
 // ───────────────────────────────────────────────────────────────────────────────
 async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
+  try {
+    // 1. RETURNING OAuth user
+    let user = users.find((u) => u.googleId === profile.id);
+    if (user) {
+      return done(null, user);
+    }
+
+    // 2. EXISTING local account (first-time Google login)
+    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+    user = users.find((u) => u.email === email);
+    if (user) {
+      if (profile._json && profile._json.email_verified) {
+        user.googleId = profile.id;
+        return done(null, user);
+      }
+      return done(null, false);
+    }
+
+    // 3. BRAND-NEW user
+    const newUser = {
+      id: nextId(),
+      googleId: profile.id,
+      email,
+      name: profile.displayName,
+      role: 'member',
+    };
+    users.push(newUser);
+    return done(null, newUser);
+  } catch (err) {
+    return done(err);
+  }
 }
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID:     process.env.GOOGLE_CLIENT_ID     || 'test-client-id',
+      clientID: process.env.GOOGLE_CLIENT_ID || 'test-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-client-secret',
-      callbackURL:  '/auth/google/callback',
+      callbackURL: '/auth/google/callback',
     },
     verifyCallback,
   ),
