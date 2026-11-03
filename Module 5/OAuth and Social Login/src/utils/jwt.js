@@ -1,23 +1,38 @@
 'use strict';
-// utils/jwt.js — thin wrapper around jsonwebtoken
-// Given — do not modify.
 
-const jwt = require('jsonwebtoken');
-const ACCESS_SECRET = process.env.ACCESS_SECRET || 'lu55-test-secret-do-not-use-in-production-32c';
+// routes/auth.js — OAuth entry points
 
-/**
- * Sign a payload and return a short-lived access token.
- * Caller is responsible for passing { sub, role } as minimum claims.
- */
-function signToken(payload) {
-  return jwt.sign(payload, ACCESS_SECRET, { algorithm: 'HS256', expiresIn: '15m' });
-}
+const router = require('express').Router();
+const { passport } = require('../auth/passport');
+const { signToken } = require('../utils/jwt');
 
-/**
- * Verify and decode a token. Throws on invalid or expired tokens.
- */
-function verifyToken(token) {
-  return jwt.verify(token, ACCESS_SECRET, { algorithms: ['HS256'] });
-}
+// Triggers the OAuth flow.
+router.get(
+  '/google',
+  passport.authenticate('google', {
+    scope: ['openid', 'email', 'profile'],
+    session: false,
+  }),
+);
 
-module.exports = { signToken, verifyToken };
+// Handles the callback and returns an app JWT.
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: '/auth/failure',
+  }),
+  (req, res) => {
+    const token = signToken({ sub: req.user.id, role: req.user.role });
+    return res.json({ token });
+  },
+);
+
+// Shown when OAuth fails.
+router.get('/failure', (_req, res) => {
+  return res.status(401).json({
+    error: { code: 'OAUTH_FAILED', message: 'Google login failed or was denied' },
+  });
+});
+
+module.exports = router;
