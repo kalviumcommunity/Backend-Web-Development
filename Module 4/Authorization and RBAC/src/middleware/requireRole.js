@@ -1,6 +1,4 @@
-// TODO: Implement the requireRole factory.
-//
-// requireRole(...allowedRoles) must RETURN an Express middleware that:
+// requireRole(...allowedRoles) returns middleware that:
 //
 // 1. Responds 401 { error: { code: 'UNAUTHENTICATED', message: '...' } }
 //    if req.user is missing (defensive — requireAuth should have set it).
@@ -11,12 +9,19 @@
 // 3. Otherwise calls next().
 //
 // Read the role ONLY from req.user.role — never from req.body.
-//
-// Right now it lets everyone through, so the role gates do nothing.
 
 module.exports = function requireRole(...allowedRoles) {
   return (req, res, next) => {
-    // Replace this pass-through with the real check:
+    if (!req.user) {
+      return res.status(401).json({
+        error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
+      });
+    }
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: { code: 'FORBIDDEN', message: 'Insufficient role' },
+      });
+    }
     next();
   };
 };
