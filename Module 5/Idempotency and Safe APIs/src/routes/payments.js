@@ -24,11 +24,35 @@ const router = require('express').Router();
 const { charges, idempotency, nextChargeId } = require('../store');
 
 router.post('/', (req, res) => {
-  // TODO: implement rules 1-3 above. The stub below always charges — remove it.
+  const key = req.headers['idempotency-key'];
+
+  // Rule 1: Missing Idempotency Key
+  if (!key) {
+    return res.status(400).json({
+      error: {
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+        message: 'Idempotency-Key header is required'
+      }
+    });
+  }
+
+  // Rule 2: Same Idempotency Key (Return previously stored response)
+  if (idempotency.has(key)) {
+    const cachedResponse = idempotency.get(key);
+    return res.status(cachedResponse.status).json(cachedResponse.body);
+  }
+
+  // Rule 3 & 4: New / Different Idempotency Key
   const amount = req.body && req.body.amount;
   const charge = { id: nextChargeId(), amount, status: 'charged' };
   charges.push(charge);
-  return res.status(201).json({ id: charge.id, amount: charge.amount, status: charge.status });
+
+  const responseBody = { id: charge.id, amount: charge.amount, status: charge.status };
+  const responseData = { status: 201, body: responseBody };
+
+  idempotency.set(key, responseData);
+
+  return res.status(201).json(responseBody);
 });
 
 module.exports = router;
