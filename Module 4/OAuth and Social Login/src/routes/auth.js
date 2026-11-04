@@ -11,11 +11,6 @@
 //   verifyCallback. If verifyCallback calls done(null, user), Passport sets
 //   req.user and calls next() — landing in the handler below.
 //
-// YOUR TASK: complete the callback handler.
-//   After Passport sets req.user, issue an app JWT using signToken and return it.
-//   Use signToken({ sub: req.user.id, role: req.user.role }) — not Google's token.
-//   Respond with: res.json({ token })
-
 const router  = require('express').Router();
 const { passport } = require('../auth/passport');
 const { signToken } = require('../utils/jwt');   // hint: use this
@@ -29,7 +24,6 @@ router.get(
   }),
 );
 
-// ── TODO: complete the callback handler ─────────────────────────────────────
 router.get(
   '/google/callback',
   passport.authenticate('google', {
@@ -37,9 +31,8 @@ router.get(
     failureRedirect: '/auth/failure',
   }),
   (req, res) => {
-    // req.user is the user returned by verifyCallback
-    // Issue YOUR app JWT here and return it as JSON.
-    res.json({ error: 'not implemented' }); // remove this line when you implement
+    const token = signToken({ sub: req.user.id, role: req.user.role });
+    res.json({ token });
   },
 );
 
