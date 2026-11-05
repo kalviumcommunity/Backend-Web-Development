@@ -10,5 +10,5 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
 });
 
-const port = Number(process.env.PORT || 3000);
+const port = Number(process.env.PORT || 5433);
 app.listen(port, () => console.log(`API listening on ${port}`));
