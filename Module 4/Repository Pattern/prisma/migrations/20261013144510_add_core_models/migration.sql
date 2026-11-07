@@ -1,0 +1,81 @@
+CREATE TABLE "User" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "Post" (
+    "id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "authorId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "Comment" (
+    "id" SERIAL NOT NULL,
+    "body" TEXT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "postId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Comment_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "Vote" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "postId" INTEGER NOT NULL,
+    CONSTRAINT "Vote_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "Follow" (
+    "followerId" INTEGER NOT NULL,
+    "followingId" INTEGER NOT NULL,
+    CONSTRAINT "Follow_pkey" PRIMARY KEY ("followerId", "followingId")
+);
+
+CREATE TABLE "Tag" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    CONSTRAINT "Tag_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "PostTag" (
+    "postId" INTEGER NOT NULL,
+    "tagId" INTEGER NOT NULL,
+    CONSTRAINT "PostTag_pkey" PRIMARY KEY ("postId", "tagId")
+);
+
+CREATE UNIQUE INDEX "Vote_userId_postId_key" ON "Vote"("userId", "postId");
+CREATE UNIQUE INDEX "Tag_name_key" ON "Tag"("name");
+CREATE INDEX "Post_authorId_idx" ON "Post"("authorId");
+CREATE INDEX "Post_createdAt_idx" ON "Post"("createdAt");
+CREATE INDEX "Comment_postId_idx" ON "Comment"("postId");
+CREATE INDEX "Comment_userId_idx" ON "Comment"("userId");
+CREATE INDEX "Vote_postId_idx" ON "Vote"("postId");
+CREATE INDEX "Follow_followingId_idx" ON "Follow"("followingId");
+CREATE INDEX "PostTag_tagId_idx" ON "PostTag"("tagId");
+
+ALTER TABLE "Post" ADD CONSTRAINT "Post_authorId_fkey"
+  FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Comment" ADD CONSTRAINT "Comment_userId_fkey"
+  FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Comment" ADD CONSTRAINT "Comment_postId_fkey"
+  FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Vote" ADD CONSTRAINT "Vote_userId_fkey"
+  FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Vote" ADD CONSTRAINT "Vote_postId_fkey"
+  FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followerId_fkey"
+  FOREIGN KEY ("followerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followingId_fkey"
+  FOREIGN KEY ("followingId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PostTag" ADD CONSTRAINT "PostTag_postId_fkey"
+  FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PostTag" ADD CONSTRAINT "PostTag_tagId_fkey"
+  FOREIGN KEY ("tagId") REFERENCES "Tag"("id") ON DELETE CASCADE ON UPDATE CASCADE;

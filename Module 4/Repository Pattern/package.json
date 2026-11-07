@@ -5,6 +5,15 @@
   "description": "LU41 Repository Pattern assignment starter",
   "main": "src/controllers/postController.js",
   "scripts": {
-    "start": "node src/controllers/postController.js"
+    "start": "node src/controllers/postController.js",
+    "prisma:format": "prisma format",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name add_core_models"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.17.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.17.1"
   }
 }
