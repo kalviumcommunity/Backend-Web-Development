@@ -12,20 +12,8 @@ app.post('/posts', postController.create);
 app.patch('/posts/:id', postController.update);
 app.delete('/posts/:id', postController.remove);
 
-// Safe error handling
+// General application error handling
 app.use((error, req, res, next) => {
-  if (error.code === 'P2003') {
-    return res.status(400).json({
-      error: 'Invalid reference: related record does not exist'
-    });
-  }
-
-  if (error.code === 'P2002') {
-    return res.status(409).json({
-      error: 'A record with this value already exists'
-    });
-  }
-
   if (error.statusCode) {
     return res.status(error.statusCode).json({
       error: error.message
