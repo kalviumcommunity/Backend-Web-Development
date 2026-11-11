@@ -9,33 +9,68 @@ function sleep(ms) {
 }
 
 function isRetryable(error) {
-  // TODO: retry transient errors only: AbortError, 429, 5xx, or network errors.
-  // Never retry 4xx client errors other than 429.
+  if (!error) return false;
+
+  // Aborted requests (including our timeout) and network errors are transient.
+  if (error.name === 'AbortError') return true;
+
+  // Network errors typically have no HTTP status.
+  if (error.status == null) return true;
+
+  // Rate limits and server failures may recover on a later attempt.
+  return error.status === 429 || error.status >= 500;
 }
 
 async function withTimeout(operation, timeoutMs) {
-  // TODO: create AbortController, abort after timeoutMs,
-  // call operation(controller.signal), always clear timer in finally.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await operation(controller.signal);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function withRetry(operation, options = {}) {
-  // TODO: maxAttempts defaults to 3.
-  // Run operation, retry only isRetryable errors.
-  // Between attempts await sleep(baseDelayMs * 2 ** attempt).
-  // Throw final error after max attempts or non-retryable error.
+  const maxAttempts = options.maxAttempts ?? 3;
+  const baseDelayMs = options.baseDelayMs ?? 25;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      const isLastAttempt = attempt === maxAttempts - 1;
+      if (isLastAttempt || !isRetryable(error)) {
+        throw error;
+      }
+
+      await sleep(baseDelayMs * 2 ** attempt);
+    }
+  }
+
+  // Defensive guard for maxAttempts values such as 0.
+  throw new Error('withRetry requires maxAttempts to be at least 1');
 }
 
 async function getProfileWithAvatar(authorId, avatarClient, options = {}) {
-  const timeoutMs = options.timeoutMs || 200;
-  const maxAttempts = options.maxAttempts || 3;
-  const baseDelayMs = options.baseDelayMs || 25;
+  const timeoutMs = options.timeoutMs ?? 200;
+  const maxAttempts = options.maxAttempts ?? 3;
+  const baseDelayMs = options.baseDelayMs ?? 25;
 
   try {
-    // TODO: compose retry around timeout around avatarClient.getAvatar.
-    // Return { authorId, avatar, degraded: false } on success.
+    const avatar = await withRetry(
+      () => withTimeout(
+        signal => avatarClient.getAvatar(authorId, { signal }),
+        timeoutMs
+      ),
+      { maxAttempts, baseDelayMs }
+    );
+
+    return { authorId, avatar, degraded: false };
   } catch (error) {
-    // TODO: return { authorId, avatar: DEFAULT_AVATAR, degraded: true }.
-    // Keep fallback local; do not throw for avatar failure.
+    // Avatar data is optional; preserve the profile and degrade to a safe default.
+    return { authorId, avatar: DEFAULT_AVATAR, degraded: true };
   }
 }
 
