@@ -32,7 +32,7 @@ async function handleWebhook(req, res) {
     return res.status(400).json({ error: 'Invalid JSON body' });
   }
 
-  if (!event.id) {
+  if (!event || typeof event !== 'object' || !event.id) {
     return res.status(400).json({ error: 'Missing event id' });
   }
 
@@ -44,9 +44,11 @@ async function handleWebhook(req, res) {
   res.status(200).json({ status: 'received' });
 
   setImmediate(() => {
-    Promise.resolve(handleEvent(event)).catch((error) => {
-      console.error('Webhook event processing failed:', error);
-    });
+    Promise.resolve()
+      .then(() => handleEvent(event))
+      .catch((error) => {
+        console.error('Webhook event processing failed:', error);
+      });
   });
 }
 
