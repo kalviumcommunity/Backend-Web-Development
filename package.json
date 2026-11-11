@@ -1,0 +1,18 @@
+{
+  "name": "kalvium-backend",
+  "version": "1.0.0",
+  "description": "Kalvium backend starter - Express REST API for books",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
