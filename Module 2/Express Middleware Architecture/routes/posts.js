@@ -11,7 +11,7 @@
 const express = require('express');
 const router = express.Router();
 
-// const auditWrite = require('../middleware/auditWrite');
+const auditWrite = require('../middleware/auditWrite');
 
 const posts = [{ id: 1, title: 'Hello World' }];
 

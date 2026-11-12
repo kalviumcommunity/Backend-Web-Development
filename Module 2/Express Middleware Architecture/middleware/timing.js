@@ -11,6 +11,18 @@
  * Example line:  [a3f9c1e2] POST /posts took 14ms
  */
 
-module.exports = function timing(req, res, next) {
-  // TODO: capture start, register res.on('finish', ...) to log elapsed ms, then next().
-};
+function timing(req, res, next) {
+    const start = Date.now();
+
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+
+        console.log(
+            `[${req.id}] Request completed in ${duration} ms`
+        );
+    });
+
+    next();
+}
+
+module.exports = timing;
