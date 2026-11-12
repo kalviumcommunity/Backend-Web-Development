@@ -8,7 +8,7 @@ Add `express-rate-limit` to the auth routes so brute-force attempts are throttle
 
 ```
 POST /auth/login | /auth/register | /auth/refresh
-  first 5 attempts per 15 min per IP  -> handled normally (401 on bad login, etc.)
+  first 5 attempts per 15 min per IP  -> handled normally (..401 on bad login, etc.)
   6th attempt                         -> 429 Too Many Requests + Retry-After
 GET  /health                          -> never rate limited (proves the limiter is scoped)
 ```
