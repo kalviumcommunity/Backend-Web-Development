@@ -12,3 +12,10 @@ app.use((error, req, res, next) => {
 
 const port = Number(process.env.PORT || 3000);
 app.listen(port, () => console.log(`API listening on ${port}`));
+app.use((error, req, res, next) => {
+const status = Number(error.status || 500);
+const code = error.code && status < 500 ? error.code : 'INTERNAL_ERROR';
+const message = status < 500 ? error.message : 'Internal server error';
+if (status >= 500) console.error(error.message);
+res.status(status).json({ error: { code, message } });
+});
