@@ -22,5 +22,27 @@
 // Hint: express-rate-limit returns a middleware function — export it directly:
 //   const rateLimit = require('express-rate-limit');
 //   module.exports = rateLimit({ ...options });
+//
+// In a multi-instance deployment behind a load balancer, the default in-memory
+// store is not enough because each running server keeps its own separate counter.
+// An attacker can spread requests across multiple Node instances and effectively
+// bypass a per-instance limit. To enforce one shared quota across the cluster, we
+// would swap the store to a Redis-backed implementation such as
+// `rate-limit-redis` and pass `store: new RedisStore({ sendCommand: (...args) => redis.call(...args) })`.
+// That gives every instance a single shared counter in Redis instead of separate
+// per-process memory counters.
 
-module.exports = (req, res, next) => next(); // TODO: replace this stub
+const rateLimit = require('express-rate-limit');
+
+module.exports = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Too many requests, please try again later.'
+    });
+  }
+});
