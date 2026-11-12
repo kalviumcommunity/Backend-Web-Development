@@ -57,10 +57,10 @@ Submit PR link.
 ## Suggested Manual Checks
 
 After refactor, manually verify:
-- list route returns `data` plus pagination `meta`
-- single-resource route returns consistent `data`
-- create route returns correct status + consistent body
-- like route follows resource design
-- missing resource returns structured 404
-- internal failure returns safe 500 without stack / fake DB leakage
-- old verb routes are gone from public contract
+- `GET /posts` returns `data` plus pagination `meta`
+- `GET /posts/:id` returns a single resource in `data`
+- `POST /posts` returns `201` with the resource in `data`
+- `POST /posts/:id/likes` returns the updated post in `data`
+- `GET /posts/:id` and `POST /posts/:id/likes` return structured 404 errors when missing
+- `GET /explode` returns a safe 500 without stack / fake DB leakage
+- old verb routes such as `/getPosts` are gone from the public contract
