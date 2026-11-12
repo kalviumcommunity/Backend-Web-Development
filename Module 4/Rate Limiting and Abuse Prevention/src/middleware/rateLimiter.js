@@ -1,40 +1,51 @@
 'use strict';
 // middleware/rateLimiter.js
 //
-// YOUR TASK: replace this pass-through with a real rate limiter.
-//
-// Right now this middleware lets EVERY request through, so the login route can be
-// brute-forced without limit. Build a strict limiter with `express-rate-limit`
-// (already in package.json) that is exported as the middleware used by the three
-// auth routes in src/routes/auth.js.
-//
-// Requirements (checked by the tests):
-//   - windowMs: 15 minutes
-//   - max: 5 attempts per window per IP
-//   - after the limit, respond with 429 and a `Retry-After` header
-//   - standardHeaders: true, legacyHeaders: false
-//   - (recommended) skipSuccessfulRequests: true so only FAILED attempts count
-//
-// Also add a COMMENT explaining how a Redis-backed store (rate-limit-redis) would
-// replace the default in-memory store in a multi-instance deployment, and why the
-// in-memory store is not enough when several instances run behind a load balancer.
-//
-// Hint: express-rate-limit returns a middleware function — export it directly:
-//   const rateLimit = require('express-rate-limit');
-//   module.exports = rateLimit({ ...options });
+// Strict limiter for the auth routes (login / register / refresh).
+// First 5 failed attempts per 15 minutes per IP pass through; the 6th
+// attempt gets a 429 with a Retry-After header.
 
-module.exports = (req, res, next) => next(); // TODO: replace this stub
+const rateLimit = require('express-rate-limit');
 
-const ratelimit = require('express-rate-limit');
-module.exports=ratelimit({
-    windowMs: 15*60*1000,
-    max:5,
-    legacyHeaders:false,
-    standardHeaders:true,
-    skipSuccessfulRequests:true,
-    handler:(req,res)=> {
-        const retryAfter=Math.ceil((req.rateLimit.resetTime-Date.now())/1000);
-        res.set('Retry-After',retryAfter);
-        res.status(429).json({message:'Too many requests, please try again later.'});
-    },
-})
+module.exports = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15-minute sliding window
+  max: 5,                   // 5 attempts per window per IP
+  standardHeaders: true,    // send RateLimit-* headers
+  legacyHeaders: false,     // don't send the old X-RateLimit-* headers
+  // Only FAILED attempts count toward the limit — successful logins
+  // shouldn't punish legitimate users (skipSuccessfulRequests).
+  skipSuccessfulRequests: true,
+
+  handler: (req, res) => {
+    const retryAfter = Math.max(
+      1,
+      Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+    );
+    res.set('Retry-After', retryAfter);
+    res.status(429).json({
+      message: 'Too many attempts, please try again later.',
+    });
+  },
+});
+
+// NOTE — Redis-backed store (rate-limit-redis):
+// By default express-rate-limit keeps counters in the process's memory.
+// That works for a single instance, but behind a load balancer with N
+// instances each process maintains its OWN independent counter, so a
+// client whose requests land on different instances effectively gets
+// N x the limit (5 attempts become 5 x N), defeating the protection.
+// In a multi-instance deployment, pass a shared store so every instance
+// increments the same counters:
+//
+//   const { RedisStore } = require('rate-limit-redis');
+//   const Redis = require('ioredis');
+//   const client = new Redis(process.env.REDIS_URL);
+//
+//   module.exports = rateLimit({
+//     ...sameOptions,
+//     store: new RedisStore({ sendCommand: (...args) => client.call(...args) }),
+//   });
+//
+// Redis is fast, shared across all instances, survives restarts, and can
+// enforce the per-IP limit globally no matter which instance serves the
+// request.
