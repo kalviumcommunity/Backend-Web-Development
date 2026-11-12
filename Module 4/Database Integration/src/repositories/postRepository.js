@@ -1,36 +1,68 @@
-const seed = require('../data/postSeed');
+const prisma = require('../db/prisma');
 
-// Starter implementation: same async contract, temporary in-memory storage.
-const posts = seed.map((post) => ({ ...post }));
-let nextId = posts.reduce((max, post) => Math.max(max, post.id), 0) + 1;
+function normalizeId(id) {
+  const parsedId = Number(id);
+  return Number.isSafeInteger(parsedId) && parsedId > 0 ? parsedId : null;
+}
+
+function createConflictError() {
+  const error = new Error('The request conflicts with an existing or related record');
+  error.statusCode = 409;
+  return error;
+}
+
+function throwSafeConstraintError(error) {
+  if (['P2002', 'P2003', 'P2004', 'P2011', 'P2014'].includes(error.code)) {
+    throw createConflictError();
+  }
+  throw error;
+}
 
 async function findAll() {
-  return posts.map((post) => ({ ...post }));
+  return prisma.post.findMany({ orderBy: { id: 'asc' } });
 }
 
 async function findById(id) {
-  return posts.find((post) => post.id === Number(id)) || null;
+  const postId = normalizeId(id);
+  if (postId === null) return null;
+  return prisma.post.findUnique({ where: { id: postId } });
 }
 
 async function create(fields) {
-  const post = { id: nextId++, title: fields.title, body: fields.body || '', authorId: fields.authorId };
-  posts.push(post);
-  return { ...post };
+  if (!Number.isSafeInteger(fields.authorId) || fields.authorId <= 0) {
+    throw createConflictError();
+  }
+
+  try {
+    return await prisma.post.create({
+      data: {
+        title: fields.title,
+        body: fields.body || '',
+        authorId: fields.authorId,
+      },
+    });
+  } catch (error) {
+    throwSafeConstraintError(error);
+  }
 }
 
 async function update(id, patch) {
-  const post = posts.find((candidate) => candidate.id === Number(id));
-  if (!post) return null;
-  if (patch.title !== undefined) post.title = patch.title;
-  if (patch.body !== undefined) post.body = patch.body;
-  return { ...post };
+  const postId = normalizeId(id);
+  if (postId === null) return null;
+
+  try {
+    return await prisma.post.update({ where: { id: postId }, data: patch });
+  } catch (error) {
+    if (error.code === 'P2025') return null;
+    throwSafeConstraintError(error);
+  }
 }
 
 async function remove(id) {
-  const index = posts.findIndex((post) => post.id === Number(id));
-  if (index === -1) return false;
-  posts.splice(index, 1);
-  return true;
+  const postId = normalizeId(id);
+  if (postId === null) return false;
+  const result = await prisma.post.deleteMany({ where: { id: postId } });
+  return result.count > 0;
 }
 
 module.exports = { findAll, findById, create, update, remove };
