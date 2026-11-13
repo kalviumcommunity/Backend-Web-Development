@@ -1,11 +1,11 @@
 const postRepository = require('../repositories/postRepository');
 
 async function listPosts() {
-  return postRepository.findAll();
+  return await postRepository.findAll();
 }
 
 async function getPost(id) {
-  return postRepository.findById(id);
+  return await postRepository.findById(id);
 }
 
 async function createPost(fields) {
@@ -14,7 +14,8 @@ async function createPost(fields) {
     error.statusCode = 422;
     throw error;
   }
-  return postRepository.create({
+
+  return await postRepository.create({
     title: fields.title,
     body: fields.body || '',
     authorId: fields.authorId,
@@ -22,11 +23,17 @@ async function createPost(fields) {
 }
 
 async function updatePost(id, patch) {
-  return postRepository.update(id, patch);
+  return await postRepository.update(id, patch);
 }
 
 async function removePost(id) {
-  return postRepository.remove(id);
+  return await postRepository.remove(id);
 }
 
-module.exports = { listPosts, getPost, createPost, updatePost, removePost };
+module.exports = {
+  listPosts,
+  getPost,
+  createPost,
+  updatePost,
+  removePost,
+};
