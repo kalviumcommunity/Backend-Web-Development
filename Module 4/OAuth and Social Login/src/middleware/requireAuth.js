@@ -1,15 +1,15 @@
 'use strict';
-// middleware/requireAuth.js — verifies the Bearer token and sets req.user
-// Given — do not modify. This is the middleware from LU51.
+// middleware/requireAuth.js — verifies the authorization header and sets req.user
+// Given — this is the middleware from LU51.
 
 const { verifyToken } = require('../utils/jwt');
 
 function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
-  const match  = header.match(/^Bearer (.+)$/i);
+  const match = header.match(/^Bearer\s+(.+)$/i);
   if (!match) {
     return res.status(401).json({
-      error: { code: 'UNAUTHENTICATED', message: 'Bearer token required' },
+      error: { code: 'UNAUTHENTICATED', message: 'Authorization credential required' },
     });
   }
   try {
