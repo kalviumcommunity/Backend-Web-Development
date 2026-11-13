@@ -33,12 +33,12 @@ function verifyOTP(email, code) {
   }
 
   _store.delete(email);
-
   return { ok: true };
 }
 
-// Preserve your existing markVerified helper here.
-// If the starter file already defines it, keep that implementation.
+function markVerified(email) {
+  return true;
+}
 
 module.exports = {
   generateOTP,
