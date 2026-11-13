@@ -22,5 +22,19 @@
 // Hint: express-rate-limit returns a middleware function — export it directly:
 //   const rateLimit = require('express-rate-limit');
 //   module.exports = rateLimit({ ...options });
+const rateLimit = require('express-rate-limit');
 
-module.exports = (req, res, next) => next(); // TODO: replace this stub
+module.exports = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    handler: (req, res) => {
+        const retryAfter = Math.ceil(
+            (req.rateLimit.resetTime.getTime() - Date.now())
+        );
+        res.set('Retry-After', String(Math.ceil(retryAfter, 1)));
+        res.status(429).json({ error: 'Too many requests, please try again later.'});
+    },
+}) // TODO: replace this stub
