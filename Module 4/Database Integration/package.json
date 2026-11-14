@@ -6,10 +6,12 @@
     "start": "node src/app.js",
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "db:seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
+    "dotenv": "^18.0.10",
     "express": "^5.1.0"
   },
   "devDependencies": {
