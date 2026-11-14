@@ -46,32 +46,35 @@ function verifySignature(rawBody, sigHeader) {
 
 const _processedIds = new Set();
 
-async function handleWebhook(req, res) {
-  // Step 1: Verify HMAC-SHA256 signature
-  const isValid = verifySignature(req.body, req.headers['x-webhook-signature']);
-  if (!isValid) {
+function handleWebhook(req, res) {
+  // 1. Verify signature (401 if bad)
+  if (!verifySignature(req.body, req.headers['x-webhook-signature'])) {
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
-  // Step 2: Parse body
+  // 2. Parse only AFTER verification
   const event = JSON.parse(req.body);
 
-  // Step 3: Idempotency
+  // 3. Idempotency check
   if (_processedIds.has(event.id)) {
     return res.status(200).json({ status: 'already_processed' });
   }
 
-  // Step 4: Mark as processed
+  // 4. Mark as seen BEFORE replying
   _processedIds.add(event.id);
 
-  // Step 5: Acknowledge
+  // 5. Reply 200 immediately
   res.status(200).json({ status: 'received' });
 
-  // Call handleEvent in the next tick
+  // 6. Do the work after the response
   setImmediate(() => {
-    handleEvent(event);
+    try {
+      handleEvent(event);
+    } catch (err) {
+      console.error('handleEvent failed:', err);
+    }
   });
-
 }
 
 module.exports = { handleWebhook, _processedIds };
+
