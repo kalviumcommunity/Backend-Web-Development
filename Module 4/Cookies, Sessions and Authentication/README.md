@@ -1,26 +1,86 @@
-# LU48 Starter — Session Authentication
+# LU48 — Cookies, Sessions and Authentication
+
+Session-based authentication API built with Express, Prisma, SQLite, and bcrypt.
+
+## Features
+
+- Login with email and password.
+- Password verification using bcrypt.
+- Cryptographically random opaque session IDs.
+- Signed HTTP-only sid cookies.
+- Server-side session storage with expiration.
+- Protected GET /auth/me endpoint.
+- Logout destroys the session and clears the cookie.
+- Generic authentication errors and safe user responses.
 
 ## Setup
 
-```bash
-cp .env.example .env
-npm install
-npm run setup
-npm run dev
-```
+1. Install dependencies:
 
-Set `COOKIE_SECRET` in `.env` to at least 32 random characters. Keep `COOKIE_SECURE=false` for local HTTP; production must use HTTPS with `COOKIE_SECURE=true`.
+   npm install
 
-Seeded demo account: `sam@example.com` / `SessionDemo!48`.
+2. Copy the example environment file:
 
-## Implement
+   cp .env.example .env
 
-Complete the TODOs in:
+3. Edit .env and set COOKIE_SECRET to a random secret of at least 32 characters.
 
-- `src/routes/authRoutes.js`
-- `src/session/sessionStore.js`
-- `src/middleware/requireSession.js`
+4. For local HTTP development, use COOKIE_SECURE=false.
+   In production, use HTTPS and COOKIE_SECURE=true.
 
-Required endpoints: `POST /auth/login`, `GET /auth/me`, `POST /auth/logout`.
+5. Initialize the database and seed the demo user:
 
-Use Postman cookie jar or curl `-c cookies.txt` and `-b cookies.txt` to preserve the cookie between requests.
+   npm run setup
+
+6. Start the server:
+
+   npm run dev
+
+The default port is 3000. Change PORT in .env if that port is already occupied.
+
+## Demo Account
+
+Email: sam@example.com
+
+Password: SessionDemo!48
+
+## API Endpoints
+
+### POST /auth/login
+
+Authenticates a user and creates a server-side session. Returns a safe user object and sets a signed sid cookie.
+
+### GET /auth/me
+
+Returns the authenticated user's identity. Requires a valid session cookie.
+
+### POST /auth/logout
+
+Destroys the current session and clears the sid cookie. Returns 204 No Content.
+
+## Testing
+
+Use curl to test the login, profile, and logout endpoints. Save the login cookie using the -c option and send it with -b on subsequent requests.
+
+Example:
+
+curl -i -c cookies.txt -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d '{"email":"sam@example.com","password":"SessionDemo!48"}'
+
+curl -i -b cookies.txt http://localhost:3000/auth/me
+
+curl -i -b cookies.txt -X POST http://localhost:3000/auth/logout
+
+## Session Storage
+
+Sessions are stored in an in-memory Map for this learning project. Expired sessions are removed when accessed, and sessions are destroyed on logout.
+
+In-memory sessions are lost when the server restarts and are not shared between server instances. Production deployments should use a shared expiring session store such as Redis.
+
+## Security
+
+- Passwords are verified using bcrypt.
+- Session IDs are generated using cryptographically secure random bytes.
+- Cookies are signed, HTTP-only, and SameSite=Lax.
+- Production cookies use the Secure flag.
+- Password hashes and session IDs are not included in user API responses.
+- Authentication failures use generic error messages.
