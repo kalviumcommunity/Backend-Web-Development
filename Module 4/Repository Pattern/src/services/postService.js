@@ -1,43 +1,50 @@
-const postStore = require('../data/postStore');
+
+const postRepo = require('../repositories/postRepository.js');
 
 function listPosts() {
-  return postStore.posts;
+    return postRepo.findAll();
 }
 
 function getPost(id) {
-  return postStore.posts.find((post) => post.id === Number(id)) || null;
+    return postRepo.findById(Number(id));
 }
 
 function createPost(fields) {
-  if (!fields || !fields.title) {
-    const error = new Error('Title is required');
-    error.statusCode = 422;
-    throw error;
-  }
+    if (!fields || !fields.title) {
+        const error = new Error('Title is required');
+        error.statusCode = 422;
+        throw error;
+    }
 
-  const post = {
-    id: postStore.nextId(),
-    title: fields.title,
-    body: fields.body || '',
-    authorId: fields.authorId,
-  };
-  postStore.posts.push(post);
-  return post;
+    return postRepo.create({
+        title: fields.title,
+        body: fields.body || '',
+        authorId: fields.authorId
+    });
 }
 
 function updatePost(id, patch) {
-  const post = getPost(id);
-  if (!post) return null;
-  if (patch.title !== undefined) post.title = patch.title;
-  if (patch.body !== undefined) post.body = patch.body;
-  return post;
+    const allowedPatch = {};
+
+    if (patch.title !== undefined) {
+        allowedPatch.title = patch.title;
+    }
+
+    if (patch.body !== undefined) {
+        allowedPatch.body = patch.body;
+    }
+
+    return postRepo.update(Number(id), allowedPatch);
 }
 
 function removePost(id) {
-  const index = postStore.posts.findIndex((post) => post.id === Number(id));
-  if (index === -1) return false;
-  postStore.posts.splice(index, 1);
-  return true;
+    return postRepo.remove(Number(id));
 }
 
-module.exports = { listPosts, getPost, createPost, updatePost, removePost };
+module.exports = {
+    listPosts,
+    getPost,
+    createPost,
+    updatePost,
+    removePost
+};
