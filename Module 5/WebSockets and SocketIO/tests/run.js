@@ -4,7 +4,7 @@
 // Automated test suite for the WebSockets & Socket.IO assignment.
 // Run with: npm test
 
-const http          = require('node:http');
+const http = require('node:http');
 const { io: Client } = require('socket.io-client');
 const { initSocket } = require('../src/socket');
 
