@@ -1,26 +1,34 @@
 'use strict';
 // middleware/rateLimiter.js
 //
-// YOUR TASK: replace this pass-through with a real rate limiter.
+// Rate limiter implementation for sensitive authentication routes using express-rate-limit.
 //
-// Right now this middleware lets EVERY request through, so the login route can be
-// brute-forced without limit. Build a strict limiter with `express-rate-limit`
-// (already in package.json) that is exported as the middleware used by the three
-// auth routes in src/routes/auth.js.
-//
-// Requirements (checked by the tests):
-//   - windowMs: 15 minutes
-//   - max: 5 attempts per window per IP
-//   - after the limit, respond with 429 and a `Retry-After` header
-//   - standardHeaders: true, legacyHeaders: false
-//   - (recommended) skipSuccessfulRequests: true so only FAILED attempts count
-//
-// Also add a COMMENT explaining how a Redis-backed store (rate-limit-redis) would
-// replace the default in-memory store in a multi-instance deployment, and why the
-// in-memory store is not enough when several instances run behind a load balancer.
-//
-// Hint: express-rate-limit returns a middleware function — export it directly:
-//   const rateLimit = require('express-rate-limit');
-//   module.exports = rateLimit({ ...options });
+// REDIS / DISTRIBUTED ARCHITECTURE EXPLANATION:
+// - The default MemoryStore stores hit counters in memory inside a single Node.js process.
+// - When multiple server instances run behind a load balancer, each instance maintains a separate,
+//   independent in-memory counter.
+// - As a result, users/attackers could exceed the intended limit across different instances
+//   (e.g., hitting instance A 5 times, instance B 5 times, bypassing the overall 5-request cap).
+// - A Redis-backed store using `rate-limit-redis` shares a single centralized counter across all instances.
+// - RedisStore can replace the default in-memory store through the `store` configuration option:
+//     const { RedisStore } = require('rate-limit-redis');
+//     store: new RedisStore({ sendCommand: (...args) => redisClient.sendCommand(args) })
 
-module.exports = (req, res, next) => next(); // TODO: replace this stub
+const rateLimit = require('express-rate-limit');
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes window
+  max: 5, // Limit each IP to 5 requests per windowMs
+  statusCode: 429, // Return 429 Too Many Requests when limit is exceeded
+  message: {
+    error: {
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many login attempts, please try again later.'
+    }
+  },
+  skipSuccessfulRequests: true, // Only failed requests count towards the limit
+  standardHeaders: true, // Return rate limit info in `RateLimit-*` and `Retry-After` headers
+  legacyHeaders: false // Disable `X-RateLimit-*` headers
+});
+
+module.exports = authLimiter;
