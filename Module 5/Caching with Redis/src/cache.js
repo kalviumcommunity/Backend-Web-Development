@@ -23,22 +23,49 @@
 //   lazyConnect: true
 
 const Redis = require('ioredis');
+require('dotenv').config();
+
+
 
 // TODO: create Redis instance
+// check .env.example for the exact variable name; this is a common one
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  lazyConnect: true
+});
+
 
 // TODO: implement cacheGet
 async function cacheGet(key) {
-  throw new Error('not implemented');
+  try {
+    const value = await redis.get(key);
+    return value ? JSON.parse(value) : null;   // null on a miss
+  } catch (err) {
+    console.error('cacheGet failed:', err.message);
+    return null;                               // treat errors as a miss
+  }
 }
+
 
 // TODO: implement cacheSet
 async function cacheSet(key, data, ttlSeconds) {
-  throw new Error('not implemented');
+  try {
+    await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
+  } catch (err) {
+    console.error('cacheSet failed:', err.message);
+  }
 }
+
 
 // TODO: implement cacheDel
 async function cacheDel(key) {
-  throw new Error('not implemented');
+  try {
+    await redis.del(key);
+  } catch (err) {
+    console.error('cacheDel failed:', err.message);
+  }
 }
 
-module.exports = { cacheGet, cacheSet, cacheDel };
+
+module.exports = { cacheGet, cacheSet, cacheDel }
