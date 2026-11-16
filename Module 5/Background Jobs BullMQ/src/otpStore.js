@@ -30,45 +30,24 @@
 //    already-expired OTP, since there's no other way to fast-forward time.
 //    Without this export, Test 6 fails even with a correct verifyOTP().
 
-const crypto = require('node:crypto');
+// TODO: implement
+
 const store = new Map();
 
 function generateOTP() {
-  return String(crypto.randomInt(100000, 1000000));
+  throw new Error('not implemented');
 }
 
 function storeOTP(email, otp) {
-  store.set(email, {
-    otp,
-    expiresAt: Date.now() + 10 * 60 * 1000,
-    attempts: 0,
-  });
+  throw new Error('not implemented');
 }
 
 function verifyOTP(email, code) {
-  const entry = store.get(email);
-
-  if (!entry) {
-    return { ok: false, reason: 'not_found' };
-  }
-  if (entry.expiresAt <= Date.now()) {
-    store.delete(email);
-    return { ok: false, reason: 'expired' };
-  }
-  if (entry.attempts >= 3) {
-    return { ok: false, reason: 'too_many_attempts' };
-  }
-  if (entry.otp !== code) {
-    entry.attempts++;
-    return { ok: false, reason: 'wrong_code' };
-  }
-
-  store.delete(email);
-  return { ok: true };
+  throw new Error('not implemented');
 }
 
 function markVerified(email) {
-  console.log(`Email verified: ${email}`);
+  throw new Error('not implemented');
 }
 
 module.exports = { generateOTP, storeOTP, verifyOTP, markVerified, _store: store };
