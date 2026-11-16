@@ -29,6 +29,9 @@ const usersRouter = require('./routes/users');
 // const requestId = require('./middleware/requestId');
 // const logger = require('./middleware/logger');
 // const timing = require('./middleware/timing');
+const requestId = require('./middleware/requestId');
+const logger = require('./middleware/logger');
+const timing = require('./middleware/timing');
 
 const app = express();
 
@@ -39,14 +42,15 @@ app.use(express.json());
 // TODO: mount your GLOBAL middleware here, BEFORE the routers, in a deliberate
 //       order. request-id must run first so the logger and timer can read req.id.
 //
-//   app.use(requestId);
-//   app.use(logger);
-//   app.use(timing);
+  app.use(requestId);
+  app.use(logger);
+  app.use(timing);
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Two mounted routers (do not remove these).
 app.use('/posts', postsRouter);
 app.use('/users', usersRouter);
+
 
 const PORT = 3000;
 app.listen(PORT, () => {
