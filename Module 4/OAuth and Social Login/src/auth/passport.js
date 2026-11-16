@@ -20,8 +20,7 @@ const passport = require('passport');
 const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
 const { users, nextId } = require('../data');
 
-// ─── TODO ──────────────────────────────────────────────────────────────────────
-// Implement this function.
+// ─── User lookup and account linking ──────────────────────────────────────────
 // Three scenarios to handle, in this exact order:
 //
 //   1. RETURNING OAuth user
@@ -44,9 +43,44 @@ const { users, nextId } = require('../data');
 //
 // Hint: use Array.prototype.find() on `users`. No database, no await needed.
 // ───────────────────────────────────────────────────────────────────────────────
-async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
+function verifyCallback(accessToken, refreshToken, profile, done) {
+  try {
+    if (!profile || !profile.id) {
+      return done(new Error('Google profile is missing a required ID'));
+    }
+
+    const userByGoogleId = users.find((user) => user.googleId === profile.id);
+    if (userByGoogleId) {
+      return done(null, userByGoogleId);
+    }
+
+    if (!profile.emails || !profile.emails[0] || !profile.emails[0].value) {
+      return done(new Error('Google profile is missing a required email'));
+    }
+
+    const email = profile.emails[0].value;
+    const existingUser = users.find((user) => user.email === email);
+    if (existingUser) {
+      if (profile._json?.email_verified !== true) {
+        return done(null, false);
+      }
+
+      existingUser.googleId = profile.id;
+      return done(null, existingUser);
+    }
+
+    const newUser = {
+      id: nextId(),
+      googleId: profile.id,
+      email,
+      name: profile.displayName,
+      role: 'member',
+    };
+    users.push(newUser);
+    return done(null, newUser);
+  } catch (error) {
+    return done(error);
+  }
 }
 
 passport.use(
