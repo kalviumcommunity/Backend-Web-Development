@@ -1,7 +1,7 @@
 {
   "name": "lu51-auth-middleware-starter",
   "version": "1.0.0",
-  "description": "Starter project: implement requireAuth middleware for LU 51",
+  "description": "Express authentication API backed by Prisma",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
@@ -9,11 +9,14 @@
     "test": "node tests/run.js"
   },
   "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "prisma": "^6.16.2"
   }
 }
