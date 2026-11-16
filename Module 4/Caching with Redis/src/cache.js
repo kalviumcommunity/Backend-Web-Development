@@ -24,21 +24,68 @@
 
 const Redis = require('ioredis');
 
-// TODO: create Redis instance
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  lazyConnect: true,
+  enableOfflineQueue: false,
+  maxRetriesPerRequest: 1,
+});
+redis.on('error', () => {});
 
-// TODO: implement cacheGet
+const memoryCache = new Map();
+
+function getMemoryEntry(key) {
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+
+  if (Date.now() > entry.expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+
+  return entry.value;
+}
+
+function setMemoryEntry(key, value, ttlSeconds) {
+  memoryCache.set(key, {
+    value,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+}
+
 async function cacheGet(key) {
-  throw new Error('not implemented');
+  try {
+    const value = await redis.get(key);
+    if (value !== null) {
+      return JSON.parse(value);
+    }
+  } catch (err) {
+    console.error('[cache] get error:', err);
+  }
+
+  const fallback = getMemoryEntry(key);
+  return fallback;
 }
 
-// TODO: implement cacheSet
 async function cacheSet(key, data, ttlSeconds) {
-  throw new Error('not implemented');
+  try {
+    await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
+  } catch (err) {
+    console.error('[cache] set error:', err);
+  }
+
+  setMemoryEntry(key, data, ttlSeconds);
 }
 
-// TODO: implement cacheDel
 async function cacheDel(key) {
-  throw new Error('not implemented');
+  try {
+    await redis.del(key);
+  } catch (err) {
+    console.error('[cache] del error:', err);
+  }
+
+  memoryCache.delete(key);
 }
 
-module.exports = { cacheGet, cacheSet, cacheDel };
+module.exports = { redis, cacheGet, cacheSet, cacheDel };
