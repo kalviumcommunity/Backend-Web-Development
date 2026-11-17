@@ -41,6 +41,21 @@ npm start                  # runs on http://localhost:3000
 npm test                   # fails until you implement cache.js and app.js
 ```
 
+### Windows
+
+The `redis-server` command is not included with Windows by default. One option
+is to run Redis with Docker Desktop: start Docker Desktop, then in PowerShell
+run this once to create and start a Redis container:
+
+```powershell
+docker run --name redis-cache -p 6379:6379 -d redis
+```
+
+For later sessions, start the existing container with
+`docker start redis-cache`. Then run `npm start` or `npm test` as above. If
+Docker reports that it cannot connect to the Docker API, start Docker Desktop
+and wait for its engine to finish starting before running the command again.
+
 ## What to implement
 
 ### 1. `src/cache.js`
