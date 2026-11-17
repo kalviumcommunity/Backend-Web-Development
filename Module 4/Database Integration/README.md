@@ -6,16 +6,20 @@ Replace the in-memory repository implementation with PostgreSQL through Prisma. 
 
 ```bash
 npm install
+npm run prisma:format
+npm run prisma:validate
+npx prisma migrate dev --name initial_database
+npm run prisma:generate
+npm run prisma:seed
 npm start
 ```
 
-## Prisma preparation
-
-Copy `.env.example` to `.env` with a local PostgreSQL URL. The schema is intentionally incomplete for the assignment.
+Set `DATABASE_URL` in `.env` to a PostgreSQL database before running the Prisma
+commands. `.env.example` shows the expected format; never commit `.env` or real
+credentials.
 
 ```bash
-npm run prisma:format
-npm run prisma:validate
+npm run prisma:seed
 ```
 
-Read the platform question before editing. Do not add platform-only `question.md`, answer files, tests, or specs to this repository. Never commit `.env` or real credentials.
+The seed command is safe to rerun and upserts the demo user and posts.
