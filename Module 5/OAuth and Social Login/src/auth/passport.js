@@ -45,8 +45,46 @@ const { users, nextId } = require('../data');
 // Hint: use Array.prototype.find() on `users`. No database, no await needed.
 // ───────────────────────────────────────────────────────────────────────────────
 async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
+  try {
+    const email = profile.emails[0].value;
+
+    // Scenario 1: Returning OAuth user
+    const existingGoogleUser = users.find(
+      (user) => user.googleId === profile.id
+    );
+
+    if (existingGoogleUser) {
+      return done(null, existingGoogleUser);
+    }
+
+    // Scenario 2: Existing local account — link Google account
+    const existingEmailUser = users.find(
+      (user) => user.email === email
+    );
+
+    if (existingEmailUser) {
+      if (profile._json.email_verified !== true) {
+        return done(null, false);
+      }
+
+      existingEmailUser.googleId = profile.id;
+      return done(null, existingEmailUser);
+    }
+
+    // Scenario 3: Brand-new user
+    const newUser = {
+      id: nextId(),
+      googleId: profile.id,
+      email,
+      name: profile.displayName,
+      role: 'member',
+    };
+
+    users.push(newUser);
+    return done(null, newUser);
+  } catch (err) {
+    return done(err);
+  }
 }
 
 passport.use(
