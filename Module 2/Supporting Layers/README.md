@@ -8,10 +8,14 @@ Refactor a working but messy `articles-api` into three supporting layers: `valid
    ```bash
    npm install
    ```
-2. Start the server:
+2. Copy `.env.example` to `.env` and adjust the values if needed.
+3. Start the server:
    ```bash
    npm start
    ```
+
+`config/index.js` is the single source for `PORT`, `NODE_ENV`, `JWT_SECRET`,
+and `MAX_ARTICLES`; it supplies development defaults when values are omitted.
 
 ## Tasks
 
