@@ -10,30 +10,31 @@
 
 const repo = require('./../repository/articlesRepo');
 
-// DUPLICATED definition — should move to utils/AppError.js
-class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isOperational = true;
-  }
-}
+// TODO: Remove the duplicated AppError definition.
+// TODO: Import AppError from utils/AppError.js.
+const AppError = require('../utils/AppError');
 
-// INLINE process.env read — should move to config/index.js (config.maxArticles)
-const MAX_ARTICLES = parseInt(process.env.MAX_ARTICLES) || 50;
+// TODO: Remove the direct process.env.MAX_ARTICLES read.
+// TODO: Import config from config/index.js.
+const config = require('../config');
 
 exports.getAll = async () => repo.findAll();
 
 exports.create = async ({ title, body }) => {
   const count = await repo.count();
-  if (count >= MAX_ARTICLES) {
+
+  // TODO: Use config.maxArticles instead of MAX_ARTICLES.
+  if (count >= config.maxArticles) {
     throw new AppError('Article limit reached', 403);
   }
+
   return repo.insert({ title, body });
 };
 
 exports.update = async (id, data) => {
   const article = await repo.findById(id);
+
   if (!article) throw new AppError('Article not found', 404);
+
   return repo.update(id, data);
 };
