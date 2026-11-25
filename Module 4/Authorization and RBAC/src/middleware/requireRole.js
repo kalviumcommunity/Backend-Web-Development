@@ -16,6 +16,27 @@
 
 module.exports = function requireRole(...allowedRoles) {
   return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        error: {
+          code: "UNAUTHENTICATED",
+          message: "Authentication required",
+        },
+      });
+    }
+
+    // 2. Check if the user's role is allowed
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "You do not have permission to perform this action",
+        },
+      });
+    }
+
+    // 3. Allow the request to continue
+    next();
     // Replace this pass-through with the real check:
     next();
   };
