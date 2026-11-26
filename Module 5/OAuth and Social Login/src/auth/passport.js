@@ -1,4 +1,4 @@
-'use strict';
+
 // auth/passport.js — Google OAuth strategy
 //
 // YOUR TASK: implement verifyCallback below.
@@ -16,9 +16,6 @@
 // done(null, false)  → auth rejected (e.g. email not verified); Passport returns 401
 // done(err)          → unexpected error; Passport returns 500
 
-const passport = require('passport');
-const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
-const { users, nextId } = require('../data');
 
 // ─── TODO ──────────────────────────────────────────────────────────────────────
 // Implement this function.
@@ -44,21 +41,79 @@ const { users, nextId } = require('../data');
 //
 // Hint: use Array.prototype.find() on `users`. No database, no await needed.
 // ───────────────────────────────────────────────────────────────────────────────
-async function verifyCallback(accessToken, refreshToken, profile, done) {
   // Replace this stub with your implementation.
-  return done(null, false);
+
+
+// verifyCallback is exported so tests can call it directly without a real browser.
+
+'use strict';
+
+// auth/passport.js — Google OAuth strategy
+
+const passport = require('passport');
+const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
+const { users, nextId } = require('../data');
+
+async function verifyCallback(accessToken, refreshToken, profile, done) {
+  try {
+    // Get Google user details
+    const googleId = profile.id;
+    const email = profile.emails[0].value;
+    const name = profile.displayName;
+
+    // 1. RETURNING OAuth user
+    const existingGoogleUser = users.find(
+      (user) => user.googleId === googleId
+    );
+
+    if (existingGoogleUser) {
+      return done(null, existingGoogleUser);
+    }
+
+    // 2. EXISTING local account
+    const existingUser = users.find(
+      (user) => user.email === email
+    );
+
+    if (existingUser) {
+      // Reject if Google email is not verified
+      if (!profile._json.email_verified) {
+        return done(null, false);
+      }
+
+      // Link Google account
+      existingUser.googleId = googleId;
+
+      return done(null, existingUser);
+    }
+
+    // 3. BRAND-NEW user
+    const newUser = {
+      id: nextId(),
+      googleId: googleId,
+      email: email,
+      name: name,
+      role: 'member'
+    };
+
+    users.push(newUser);
+
+    return done(null, newUser);
+
+  } catch (err) {
+    return done(err);
+  }
 }
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID:     process.env.GOOGLE_CLIENT_ID     || 'test-client-id',
+      clientID: process.env.GOOGLE_CLIENT_ID || 'test-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-client-secret',
-      callbackURL:  '/auth/google/callback',
+      callbackURL: '/auth/google/callback',
     },
     verifyCallback,
   ),
 );
 
-// verifyCallback is exported so tests can call it directly without a real browser.
 module.exports = { passport, verifyCallback };
