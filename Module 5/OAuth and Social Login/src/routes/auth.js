@@ -36,11 +36,18 @@ router.get(
     session:         false,
     failureRedirect: '/auth/failure',
   }),
+  
   (req, res) => {
-    // req.user is the user returned by verifyCallback
-    // Issue YOUR app JWT here and return it as JSON.
-    res.json({ error: 'not implemented' }); // remove this line when you implement
+    // Generate our application's JWT
+    const token = signToken({
+      sub: req.user.id,
+      role: req.user.role,
+    });
+
+  // Send the JWT to the client
+    res.json({ token });
   },
+
 );
 
 // ── Given: shown when OAuth fails ───────────────────────────────────────────

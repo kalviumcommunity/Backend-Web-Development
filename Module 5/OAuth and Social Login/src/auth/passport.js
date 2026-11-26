@@ -44,10 +44,50 @@ const { users, nextId } = require('../data');
 //
 // Hint: use Array.prototype.find() on `users`. No database, no await needed.
 // ───────────────────────────────────────────────────────────────────────────────
+
 async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
+  try {
+    const email = profile.emails[0].value;
+
+    // STEP 1: Check whether this Google user already exists
+    let user = users.find((u) => u.googleId === profile.id);
+
+    if (user) {
+      return done(null, user);
+    }
+
+    // STEP 2: Check whether the email already exists
+    user = users.find((u) => u.email === email);
+
+    if (user) {
+      // Verify email before linking accounts
+      if (profile._json.email_verified === true) {
+        user.googleId = profile.id;
+        return done(null, user);
+      }
+
+      // Reject unverified email
+      return done(null, false);
+    }
+
+    // STEP 3: Create a new user
+    const newUser = {
+      id: nextId(),
+      googleId: profile.id,
+      email: email,
+      name: profile.displayName,
+      role: 'member',
+    };
+
+    users.push(newUser);
+
+    return done(null, newUser);
+
+  } catch (err) {
+    return done(err);
+  }
 }
+
 
 passport.use(
   new GoogleStrategy(
