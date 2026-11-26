@@ -20,6 +20,55 @@ const passport = require('passport');
 const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
 const { users, nextId } = require('../data');
 
+const verifyCallback = async (accessToken, refreshToken, profile, done) => {
+  try {
+    // Scenario A: Returning Google user — check googleId first
+    const existingGoogleUser = users.find(
+      (user) => user.googleId === profile.id
+    );
+
+    if (existingGoogleUser) {
+      return done(null, existingGoogleUser);
+    }
+
+    // Get email from Google profile
+    const email = profile.emails[0].value;
+
+    // Scenario B: Existing local account — link Google account
+    const existingEmailUser = users.find(
+      (user) => user.email === email
+    );
+
+    if (existingEmailUser) {
+      // Never link an unverified email
+      if (profile._json.email_verified === false) {
+        return done(null, false);
+      }
+
+      existingEmailUser.googleId = profile.id;
+
+      return done(null, existingEmailUser);
+    }
+
+    // Scenario C: Brand-new user
+    const newUser = {
+      id: nextId(),
+      googleId: profile.id,
+      email,
+      name: profile.displayName,
+      role: 'member'
+    };
+
+    users.push(newUser);
+
+    return done(null, newUser);
+
+  } catch (err) {
+    return done(err);
+  }
+};
+
+
 // ─── TODO ──────────────────────────────────────────────────────────────────────
 // Implement this function.
 // Three scenarios to handle, in this exact order:
@@ -44,10 +93,7 @@ const { users, nextId } = require('../data');
 //
 // Hint: use Array.prototype.find() on `users`. No database, no await needed.
 // ───────────────────────────────────────────────────────────────────────────────
-async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
-}
+
 
 passport.use(
   new GoogleStrategy(

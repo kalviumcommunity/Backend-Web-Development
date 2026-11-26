@@ -22,11 +22,16 @@ const { signToken } = require('../utils/jwt');   // hint: use this
 
 // ── Given: triggers the OAuth flow ──────────────────────────────────────────
 router.get(
-  '/google',
-  passport.authenticate('google', {
-    scope:   ['openid', 'email', 'profile'],
-    session: false,
-  }),
+  '/google/callback',
+  passport.authenticate('google', { session: false }),
+  (req, res) => {
+    const token = signToken({
+      sub: req.user.id,
+      role: req.user.role
+    });
+
+    res.json({ token });
+  }
 );
 
 // ── TODO: complete the callback handler ─────────────────────────────────────
