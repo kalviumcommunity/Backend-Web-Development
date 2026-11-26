@@ -14,30 +14,28 @@
  * Run it with:  npm start
  */
 
-const fs = require('fs');
-const path = require('path');
+
 
 // Absolute, OS-safe path to the sample file (do NOT hand-build paths with '+').
-const INPUT = path.join(__dirname, 'sample-data.txt');
-const OUTPUT = path.join(__dirname, 'sample-copy.txt');
+
 
 // ── PART 1: read the whole file into memory, then log its size ──────────────
-function readWholeFile() {
+
   // TODO: use fs.readFile(INPUT, callback). With no encoding, the callback
   //       receives a Buffer.
   // TODO: if there is an error, log it and return.
   // TODO: log the size in bytes. A Buffer has a .length property (bytes).
   //       Example log: "readFile: loaded 524288 bytes into memory".
-}
+
 
 // ── PART 2: stream the file and pipe it to a writable stream ────────────────
-function streamFile() {
+
   // TODO: create a readable stream with fs.createReadStream(INPUT).
   // TODO: create a writable stream with fs.createWriteStream(OUTPUT).
   // TODO: pipe the readable into the writable: readable.pipe(writable).
   // TODO: listen for the writable's "finish" event and log a done message,
   //       e.g. "stream: finished copying via 64KB chunks (flat memory)".
-}
+
 
 // ── PART 3: explain the difference ──────────────────────────────────────────
 // TODO: In your OWN words, replace this comment with 2 to 3 sentences on WHY
@@ -49,6 +47,48 @@ function streamFile() {
 //
 
 // Run both approaches.
+
+const fs = require('fs');
+const path = require('path');
+
+const INPUT = path.join(__dirname, 'sample-data.txt');
+const OUTPUT = path.join(__dirname, 'sample-copy.txt');
+
+function readWholeFile() {
+  fs.readFile(INPUT, (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+
+    console.log(`readFile: loaded ${data.length} bytes into memory`);
+  });
+}
+
+function streamFile() {
+  const readable = fs.createReadStream(INPUT);
+  const writable = fs.createWriteStream(OUTPUT);
+
+  readable.pipe(writable);
+
+  writable.on('finish', () => {
+    console.log('stream: finished copying via 64KB chunks (flat memory)');
+  });
+
+  readable.on('error', (err) => {
+    console.error(err);
+  });
+
+  writable.on('error', (err) => {
+    console.error(err);
+  });
+}
+
+// Explanation:
+// readFile loads the entire file into memory at once, which can consume a lot
+// of RAM for large files. Streams process the file in smaller chunks, keeping
+// memory usage lower and making them more suitable for large files.
+
 readWholeFile();
 streamFile();
 
