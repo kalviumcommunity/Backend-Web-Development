@@ -1,20 +1,59 @@
-const repo = require('./../repository/postsRepo');
-const AppError = require('./../utils/AppError');
+const store = require('../data/postStore');
 
-const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // a post may only be edited within 24h
 
-exports.getAll = async () => repo.findAll();
-exports.create = async ({ authorId, title, body }) => repo.insert({ authorId, title, body });
+function listPosts(query = {}) {
+  const allPosts = store.getAllPosts();
 
-/**
- * TODO (Domain rule): edit a post.
- * Implement these guards IN ORDER, each throwing an AppError, before any write:
- *   1. The post must exist          -> AppError('Post not found', 404)
- *   2. Only the author may edit it  -> AppError('You can only edit your own post', 403)
- *   3. It must be within the window  -> AppError('Post can no longer be edited', 403)
- *      (now - post.createdAt must be <= EDIT_WINDOW_MS)
- * Only when all guards pass: return repo.update(postId, changes).
- */
-exports.editPost = async (postId, userId, changes) => {
-  throw new AppError('editPost is not implemented yet', 501);
+  const requestedPage = parseInt(query.page, 10) || 1;
+  const page = Math.max(requestedPage, 1);
+
+  const requestedLimit = parseInt(query.limit, 10) || 2;
+  const limit = Math.min(Math.max(requestedLimit, 1), 2);
+
+  const startIndex = (page - 1) * limit;
+  const data = allPosts.slice(startIndex, startIndex + limit);
+
+  return {
+    data,
+    total: allPosts.length,
+    page,
+    limit
+  };
+}
+
+
+function getPost(id) {
+  return store.getPostById(id);
+}
+
+function createPost(body = {}) {
+  return store.createPost({
+    title: body.title,
+    author: body.author
+  });
+}
+
+function likePost(id) {
+  const post = store.incrementLikes(id);
+  if (!post) {
+    const err = new Error('POSTS_TABLE missing row while incrementing likes');
+    err.statusCode = 500;
+    err.debug = 'FakeStack: at postService.js:19:11';
+    throw err;
+  }
+  return post;
+}
+
+function explode() {
+  const err = new Error('SQLITE_CONSTRAINT in posts table');
+  err.statusCode = 500;
+  throw err;
+}
+
+module.exports = {
+  listPosts,
+  getPost,
+  createPost,
+  likePost,
+  explode
 };

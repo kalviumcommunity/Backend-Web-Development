@@ -1,3 +1,4 @@
+
 'use strict';
 // auth/passport.js — Google OAuth strategy
 //
@@ -35,7 +36,7 @@ const { users, nextId } = require('../data');
 //        Call done(null, user). You are done.
 //      If found but email NOT verified:
 //        Call done(null, false) — reject to prevent account hijacking.
-//
+// 
 //   3. BRAND-NEW user
 //      No match at all. Build a new user object:
 //        { id: nextId(), googleId: profile.id, email, name, role: 'member' }
@@ -45,16 +46,46 @@ const { users, nextId } = require('../data');
 // Hint: use Array.prototype.find() on `users`. No database, no await needed.
 // ───────────────────────────────────────────────────────────────────────────────
 async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
+  // 1. RETURNING OAuth user
+  const existingGoogleUser = users.find(user => user.googleId === profile.id);
+
+  if (existingGoogleUser) {
+    return done(null, existingGoogleUser);
+  }
+
+  // 2. EXISTING local account (first-time Google login)
+  const email = profile.emails[0].value;
+  const existingEmailUser = users.find(user => user.email === email);
+
+  if (existingEmailUser) {
+    if (profile._json.email_verified) {
+      existingEmailUser.googleId = profile.id;
+      return done(null, existingEmailUser);
+    }
+
+    return done(null, false);
+  }
+
+  // 3. BRAND-NEW user
+  const newUser = {
+    id: nextId(),
+    googleId: profile.id,
+    email,
+    name: profile.displayName,
+    role: 'member',
+  };
+
+  users.push(newUser);
+
+  return done(null, newUser);
 }
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID:     process.env.GOOGLE_CLIENT_ID     || 'test-client-id',
+      clientID: process.env.GOOGLE_CLIENT_ID || 'test-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-client-secret',
-      callbackURL:  '/auth/google/callback',
+      callbackURL: '/auth/google/callback',
     },
     verifyCallback,
   ),

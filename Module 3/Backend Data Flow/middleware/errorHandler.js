@@ -1,8 +1,35 @@
-const AppError = require('./../utils/AppError');
+// Handles requests to routes that do not exist
+function notFoundHandler(req, res, next) {
+  res.status(404).notFoundHandlerjson({
+    success: false,
+    error: {
+      message: 'Route not found: ${req.method} ${req.originalUrl}'
+    }
+  });
+}
 
-module.exports = function errorHandler(err, req, res, next) {
-  const status = err.statusCode || 500;
-  const body = { error: err.message || 'Internal Server Error' };
-  if (process.env.NODE_ENV !== 'production' && err.stack) body.stack = err.stack;
-  res.status(status).json(body);
+// Handles errors from controllers and services
+function errorHandler(err, req, res, next) {
+  const statusCode =
+    Number.isInteger(err.statusCode) &&
+    err.statusCode >= 400 &&
+    err.statusCode < 500
+      ? err.statusCode
+      : 500;
+
+  res.status(statusCode).json({
+    success: false,
+    error: {
+      message:
+        statusCode === 500
+          ? 'Internal server error'
+          : err.message
+    }
+  });
+}
+
+// Export both middleware functions
+module.exports = {
+  notFoundHandler,
+  errorHandler
 };

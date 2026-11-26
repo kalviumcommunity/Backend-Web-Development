@@ -1,32 +1,42 @@
-/**
- * posts-api - a small layered Express app for the Domain Rules & Workflows assignment.
- *
- * The routes, controllers, validators, and repositories are already wired and working.
- * Your job lives in the service layer (see services/). Implement the domain rules and
- * the comment workflow described in question.md.
- *
- * A tiny auth stand-in (middleware/auth.js) sets req.userId from the "x-user-id" header,
- * so identity comes from the request context, NOT from req.body.
- *
- * Run with:  npm install  then  npm start
- */
 const express = require('express');
-const auth = require('./middleware/auth');
-const postsRouter = require('./routes/posts');
-const errorHandler = require('./middleware/errorHandler');
+const postRoutes = require('./routes/postRoutes');
+const { resetData } = require('./data/postStore');  
+const controller = require('./controllers/postController');
+const {
+  notFoundHandler,
+  errorHandler
+} = require('./middleware/errorHandler');
 
-const app = express();
-app.use(express.json());
-app.use(auth); // sets req.userId
+function createApp() {
+  const app = express();
+  app.use(express.json());
 
-app.use('/posts', postsRouter);
+  app.use('/', postRoutes);
+  app.get('/explode', controller.explode);
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
-// unmatched route -> 404 through the error pipeline
-const AppError = require('./utils/AppError');
-app.use((req, res, next) => next(new AppError('Not found', 404)));
-app.use(errorHandler);
+  // TODO:
+  // - make public contract resource-oriented
+  // - standardise success envelope
+  // - standardise error envelope
+  // - add pagination metadata on list route
+  // - cap limit server-side (default limit = 2 for exercise)
+  // - stop exposing old verb routes as public contract
+  // - expose safe internal failure route for testing/demo
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`posts-api listening on http://localhost:${PORT}`));
+  return app;
+}
 
-module.exports = app;
+if (require.main === module) {
+  const app = createApp();
+  const port = 5500;
+  app.listen(port, () => {
+    console.log("Starter API listening on port ${port}");
+  });
+}
+
+module.exports = {
+  createApp,
+  resetData
+};
