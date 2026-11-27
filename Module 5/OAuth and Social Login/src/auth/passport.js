@@ -7,54 +7,96 @@
 // exchange → userinfo fetch) by the time verifyCallback is called.
 // You receive the Google profile and must decide what user object to return.
 //
-// profile.id               → Google's stable permanent ID for this user (store as googleId)
-// profile.emails[0].value  → the user's email address (may change; don't use as primary key)
-// profile.displayName      → their full name
-// profile._json.email_verified → boolean; only link to an existing account when true
+// profile.id                 → Google's stable permanent ID for this user
+// profile.emails[0].value    → the user's email address
+// profile.displayName        → their full name
+// profile._json.email_verified → boolean; only link when true
 //
-// done(null, user)   → success; Passport sets req.user = user
-// done(null, false)  → auth rejected (e.g. email not verified); Passport returns 401
-// done(err)          → unexpected error; Passport returns 500
+// done(null, user)  → success; Passport sets req.user = user
+// done(null, false) → auth rejected; Passport returns 401
+// done(err)         → unexpected error; Passport returns 500
 
 const passport = require('passport');
 const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
 const { users, nextId } = require('../data');
 
-// ─── TODO ──────────────────────────────────────────────────────────────────────
+// ─── TODO ──────────────────────────────────────────────────────
 // Implement this function.
 // Three scenarios to handle, in this exact order:
 //
-//   1. RETURNING OAuth user
-//      Find a user in `users` whose googleId === profile.id.
-//      If found → call done(null, user). You are done.
+// 1. RETURNING OAuth user
+//    Find a user in `users` whose googleId === profile.id.
+//    If found → call done(null, user). You are done.
 //
-//   2. EXISTING local account (first-time Google login)
-//      Find a user in `users` whose email === profile.emails[0].value.
-//      If found AND profile._json.email_verified is true:
-//        Set user.googleId = profile.id  (link the account)
-//        Call done(null, user). You are done.
-//      If found but email NOT verified:
-//        Call done(null, false) — reject to prevent account hijacking.
+// 2. EXISTING local account (first-time Google login)
+//    Find a user whose email === profile.emails[0].value.
+//    If found AND profile._json.email_verified is true:
+//      Set user.googleId = profile.id (link the account)
+//      Call done(null, user). You are done.
+//    If found but email NOT verified:
+//      Call done(null, false) — reject to prevent account hijacking.
 //
-//   3. BRAND-NEW user
-//      No match at all. Build a new user object:
-//        { id: nextId(), googleId: profile.id, email, name, role: 'member' }
-//      Push it into `users`.
-//      Call done(null, newUser).
+// 3. BRAND-NEW user
+//    No match at all. Build a new user object:
+//    { id: nextId(), googleId: profile.id, email, name, role: 'member' }
+//    Push it into `users`.
+//    Call done(null, newUser).
 //
-// Hint: use Array.prototype.find() on `users`. No database, no await needed.
-// ───────────────────────────────────────────────────────────────────────────────
+// Hint: use Array.prototype.find() on `users`.
+// No database, no await needed.
+// ──────────────────────────────────────────────────────────────
+
 async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
+  try {
+    // 1. Returning OAuth user
+    const existingUser = users.find(
+      user => user.googleId === profile.id
+    );
+
+    if (existingUser) {
+      return done(null, existingUser);
+    }
+
+    // 2. Existing local account
+    const email = profile.emails[0].value;
+    const name = profile.displayName;
+
+    const localUser = users.find(
+      user => user.email === email
+    );
+
+    if (localUser) {
+      if (profile._json.email_verified === true) {
+        localUser.googleId = profile.id;
+        return done(null, localUser);
+      }
+
+      return done(null, false);
+    }
+
+    // 3. Brand-new user
+    const newUser = {
+      id: nextId(),
+      googleId: profile.id,
+      email,
+      name,
+      role: 'member'
+    };
+
+    users.push(newUser);
+    return done(null, newUser);
+
+  } catch (err) {
+    return done(err);
+  }
 }
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID:     process.env.GOOGLE_CLIENT_ID     || 'test-client-id',
+      clientID: process.env.GOOGLE_CLIENT_ID || 'test-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-client-secret',
-      callbackURL:  '/auth/google/callback',
+      callbackURL: '/auth/google/callback',
     },
     verifyCallback,
   ),
