@@ -1,13 +1,52 @@
+
 'use strict';
 
-// ─── YOUR FILE, implement this ───────────────────────────────────────────────
-// Create a BullMQ Worker that processes jobs from the 'email' queue.
-//
-// Requirements:
-//  1. Handle job.name === 'otp': send an email with the OTP using transporter.
-//  2. Configure retries: attempts: 3, backoff: { type: 'exponential', delay: 1000 }
-//  3. Log worker.on('completed') and worker.on('failed') events.
-//  4. Throwing inside the worker function → job fails → BullMQ retries.
-//     Returning without throwing → job completed.
+const { Worker } = require('bullmq');
+const { connection } = require('./queue');
+const { transporter } = require('./email');
 
-// TODO: implement
+// Worker takes jobs from the 'email' queue and processes them.
+const worker = new Worker(
+  'email',
+  async (job) => {
+    if (job.name === 'otp') {
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: job.data.to,
+        subject: 'Your verification code',
+        text: `Your OTP is ${job.data.otp}`,
+      });
+
+      // Returning means the job completed successfully.
+      return;
+    }
+
+    // Unknown job types should fail and be retried.
+    throw new Error(`Unknown job type: ${job.name}`);
+  },
+  {
+    connection,
+
+    // Also include the retry settings required by the assignment.
+    // The Queue's defaultJobOptions in queue.js applies them to jobs.
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 1000,
+      },
+    },
+  }
+);
+
+// Log successful jobs.
+worker.on('completed', (job) => {
+  console.log(`job ${job.id} completed`);
+});
+
+// Log failed jobs.
+worker.on('failed', (job, err) => {
+  console.error(`job ${job ? job.id : 'unknown'} failed: ${err.message}`);
+});
+
+module.exports = { worker };
