@@ -1,33 +1,67 @@
 'use strict';
 
-// ─── YOUR FILE — implement this ───────────────────────────────────────────────
-// Export handleWebhook(req, res), used by POST /webhooks in app.js.
-// Also export _processedIds (your Set or Map) for test inspection/reset.
-//
-// Steps (in order):
-//  1. Verify HMAC-SHA256 signature
-//     - Signature header: req.headers['x-webhook-signature'] → 'sha256=<hex>'
-//     - Compute: crypto.createHmac('sha256', WEBHOOK_SECRET).update(req.body).digest('hex')
-//     - Compare: crypto.timingSafeEqual(Buffer.from(expected,'hex'), Buffer.from(received,'hex'))
-//     - Mismatch or missing → res.status(401).json({ error: 'Invalid signature' })
-//
-//  2. Parse body: const event = JSON.parse(req.body)
-//
-//  3. Idempotency: if _processedIds.has(event.id) → res.status(200).json({ status: 'already_processed' })
-//
-//  4. Mark: _processedIds.add(event.id)
-//
-//  5. Acknowledge: res.status(200).json({ status: 'received' })
-//     Then call handleEvent(event) inside setImmediate(() => { ... })
-
+const crypto = require('crypto');
 const { handleEvent } = require('./eventHandlers');
 
-// TODO: implement
-
+// Store processed event IDs to prevent duplicate processing
 const _processedIds = new Set();
 
 async function handleWebhook(req, res) {
-  res.status(501).json({ error: 'not implemented' });
+  // Step 1: Verify HMAC-SHA256 signature
+  const signature = req.headers['x-webhook-signature'];
+  const secret = process.env.WEBHOOK_SECRET;
+
+  if (!signature || !secret || !signature.startsWith('sha256=')) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  const receivedSignature = signature.slice(7);
+
+  // Validate hexadecimal signature format and length
+  if (!/^[a-fA-F0-9]{64}$/.test(receivedSignature)) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(req.body)
+    .digest('hex');
+
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+  const receivedBuffer = Buffer.from(receivedSignature, 'hex');
+
+  if (!crypto.timingSafeEqual(expectedBuffer, receivedBuffer)) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  // Step 2: Parse the request body after signature verification
+  let event;
+
+  try {
+    event = JSON.parse(req.body.toString('utf8'));
+  } catch (error) {
+    return res.status(400).json({ error: 'Invalid JSON body' });
+  }
+
+  // Step 3: Check whether the event was already processed
+  if (_processedIds.has(event.id)) {
+    return res.status(200).json({ status: 'already_processed' });
+  }
+
+  // Step 4: Mark event ID before processing
+  _processedIds.add(event.id);
+
+  // Step 5: Acknowledge immediately
+  res.status(200).json({ status: 'received' });
+
+  // Process the event asynchronously after responding
+  setImmediate(() => {
+    try {
+      handleEvent(event);
+    } catch (error) {
+      console.error('Webhook processing failed:', error);
+    }
+  });
 }
 
 module.exports = { handleWebhook, _processedIds };
