@@ -6,12 +6,18 @@
   "scripts": {
     "start": "node app.js"
   },
-  "keywords": ["express", "validators", "utils", "config", "dotenv", "layered-architecture"],
-  "author": "",
+  "keywords": [
+    "express",
+    "validators",
+    "utils",
+    "config",
+    "dotenv",
+    "layered-architecture"
+  ],
   "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "^4.22.3",
     "express-validator": "^7.1.0"
   },
-  "devDependencies": {}
+  "type": "commonjs"
 }
