@@ -18,27 +18,56 @@
 //   - Wrap in try/catch: on error, log
 //
 // Redis connection:
-//   host: process.env.REDIS_HOST || 'localhost'
-//   port: parseInt(process.env.REDIS_PORT || '6379')
-//   lazyConnect: true
+
+ 
 
 const Redis = require('ioredis');
+ const redis=new Redis({ host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  lazyConnect: true})
 
 // TODO: create Redis instance
 
 // TODO: implement cacheGet
 async function cacheGet(key) {
-  throw new Error('not implemented');
+  try {
+    const value = await redis.get(key);
+
+    if (value === null) {
+      return null;
+    }
+
+    return JSON.parse(value);
+
+  } catch (err) {
+    console.error('Cache GET error:', err);
+    return null;
+  }
 }
 
 // TODO: implement cacheSet
 async function cacheSet(key, data, ttlSeconds) {
-  throw new Error('not implemented');
+  try {
+    await redis.set(
+      key,
+      JSON.stringify(data),
+      'EX',
+      ttlSeconds
+    );
+
+  } catch (err) {
+    console.error('Cache SET error:', err);
+  }
 }
 
 // TODO: implement cacheDel
 async function cacheDel(key) {
-  throw new Error('not implemented');
+  try {
+    await redis.del(key);
+
+  } catch (err) {
+    console.error('Cache DEL error:', err);
+  }
 }
 
 module.exports = { cacheGet, cacheSet, cacheDel };
