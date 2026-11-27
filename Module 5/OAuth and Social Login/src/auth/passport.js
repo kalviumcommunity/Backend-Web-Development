@@ -1,4 +1,3 @@
-'use strict';
 // auth/passport.js — Google OAuth strategy
 //
 // YOUR TASK: implement verifyCallback below.
@@ -20,33 +19,44 @@ const passport = require('passport');
 const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
 const { users, nextId } = require('../data');
 
-// ─── TODO ──────────────────────────────────────────────────────────────────────
-// Implement this function.
-// Three scenarios to handle, in this exact order:
-//
-//   1. RETURNING OAuth user
-//      Find a user in `users` whose googleId === profile.id.
-//      If found → call done(null, user). You are done.
-//
-//   2. EXISTING local account (first-time Google login)
-//      Find a user in `users` whose email === profile.emails[0].value.
-//      If found AND profile._json.email_verified is true:
-//        Set user.googleId = profile.id  (link the account)
-//        Call done(null, user). You are done.
-//      If found but email NOT verified:
-//        Call done(null, false) — reject to prevent account hijacking.
-//
-//   3. BRAND-NEW user
-//      No match at all. Build a new user object:
-//        { id: nextId(), googleId: profile.id, email, name, role: 'member' }
-//      Push it into `users`.
-//      Call done(null, newUser).
-//
-// Hint: use Array.prototype.find() on `users`. No database, no await needed.
-// ───────────────────────────────────────────────────────────────────────────────
 async function verifyCallback(accessToken, refreshToken, profile, done) {
-  // Replace this stub with your implementation.
-  return done(null, false);
+  try {
+    const email = profile.emails?.[0]?.value;
+    const emailVerified = profile._json?.email_verified === true;
+    const name = profile.displayName;
+
+    // 1. RETURNING OAuth user
+    const existingOAuthUser = users.find((u) => u.googleId === profile.id);
+    if (existingOAuthUser) {
+      return done(null, existingOAuthUser);
+    }
+
+    // 2. EXISTING local account (first-time Google login)
+    const existingLocalUser = email
+      ? users.find((u) => u.email === email)
+      : undefined;
+
+    if (existingLocalUser) {
+      if (emailVerified) {
+        existingLocalUser.googleId = profile.id;
+        return done(null, existingLocalUser);
+      }
+      return done(null, false);
+    }
+
+    // 3. BRAND-NEW user
+    const newUser = {
+      id: nextId(),
+      googleId: profile.id,
+      email,
+      name,
+      role: 'member',
+    };
+    users.push(newUser);
+    return done(null, newUser);
+  } catch (err) {
+    return done(err);
+  }
 }
 
 passport.use(
