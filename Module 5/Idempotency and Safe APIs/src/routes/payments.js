@@ -14,13 +14,14 @@
 //
 // Implement these four rules (checked by the tests):
 //   1. MISSING key   -> respond 400 with { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', ... } }
-//   2. REPEAT key    -> return the stored response; do NOT create a new charge
+//   2. REPEAT key    -> return the store response; do NOT create a new charge
 //   3. NEW key       -> create exactly ONE charge, store { status, body } under the key, return it
 //   4. DIFFERENT key -> a separate operation (falls out of rules 2 and 3 naturally)
 //
 // Hint: read the key from  req.headers['idempotency-key'].
 
 const router = require('express').Router();
+//hi
 const { charges, idempotency, nextChargeId } = require('../store');
 //hi
 router.post('/', (req, res) => {
