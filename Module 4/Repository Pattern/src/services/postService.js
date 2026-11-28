@@ -41,3 +41,4 @@ function removePost(id) {
 }
 
 module.exports = { listPosts, getPost, createPost, updatePost, removePost };
+ 
